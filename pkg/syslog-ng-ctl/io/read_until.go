@@ -1,3 +1,5 @@
+// Copyright © 2023 Axoflow
+
 package io
 
 import (
@@ -7,6 +9,8 @@ import (
 	bytesx "github.com/axoflow/axo-edge/x/bytes"
 )
 
+// ReadUntil reads from the specified reader until it reaches the specified separator (or an error occurs, which includes EOF).
+// It returns all bytes read until the separator, the rest of the bytes which were already read, and any error that happened.
 func ReadUntil(rdr io.Reader, sep []byte, opts ...ReadUntilOption) (res []byte, rst []byte, err error) {
 	options := ReadUntilOptions{
 		ReadBufferSize: 4096,
@@ -65,8 +69,11 @@ loop:
 	return
 }
 
+// ReadUntilOption is an option for ReadUntil
 type ReadUntilOption func(*ReadUntilOptions)
 
+// ReadUntilOptions are the available options for ReadUntil
 type ReadUntilOptions struct {
+	// ReadBufferSize is the size of the buffer passed to the reader (default: 4096)
 	ReadBufferSize int
 }

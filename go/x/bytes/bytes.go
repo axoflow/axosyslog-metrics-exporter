@@ -1,7 +1,12 @@
+// Copyright © 2023 Axoflow
+
 package bytes
 
-import "golang.org/x/exp/constraints"
+import (
+	"golang.org/x/exp/constraints"
+)
 
+// CommonPrefixLen returns the length of its two parameters' common prefix
 func CommonPrefixLen(a, b []byte) int {
 	l := min(len(a), len(b))
 	a, b = a[:l], b[:l]
