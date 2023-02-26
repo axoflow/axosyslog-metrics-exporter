@@ -6,7 +6,7 @@ import (
 	"net"
 	"os"
 
-	syslogngctl "github.com/axoflow/axo-edge/internal/syslog-ng-ctl"
+	syslogngctl "github.com/axoflow/axo-edge/pkg/syslog-ng-ctl"
 )
 
 func main() {
@@ -16,7 +16,7 @@ func main() {
 		os.Exit(1)
 	}
 	ctl := syslogngctl.Controller{
-		Runner: syslogngctl.NewReadWriterCommandRunner(func() (io.ReadWriter, error) {
+		ControlChannel: syslogngctl.NewReadWriterControlChannel(func() (io.ReadWriter, error) {
 			conn, err := net.Dial("unix", socketAddr)
 			return conn, err
 		}),

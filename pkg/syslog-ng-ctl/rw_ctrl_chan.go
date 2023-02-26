@@ -9,17 +9,17 @@ import (
 	"go.uber.org/multierr"
 )
 
-func NewReadWriterCommandRunner(rwCtor func() (io.ReadWriter, error)) *ReadWriterCommandRunner {
-	return &ReadWriterCommandRunner{
+func NewReadWriterControlChannel(rwCtor func() (io.ReadWriter, error)) *ReadWriterControlChannel {
+	return &ReadWriterControlChannel{
 		rwCtor: rwCtor,
 	}
 }
 
-type ReadWriterCommandRunner struct {
+type ReadWriterControlChannel struct {
 	rwCtor func() (io.ReadWriter, error)
 }
 
-func (r ReadWriterCommandRunner) RunCommand(cmd string) (rsp string, err error) {
+func (r ReadWriterControlChannel) SendCommand(cmd string) (rsp string, err error) {
 	rw, err := r.rwCtor()
 	if err != nil {
 		return
