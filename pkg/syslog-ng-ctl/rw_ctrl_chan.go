@@ -2,11 +2,11 @@ package syslogngctl
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 
 	iox "github.com/axoflow/axo-edge/x/io"
-	"go.uber.org/multierr"
 )
 
 func NewReadWriterControlChannel(rwCtor func() (io.ReadWriter, error)) *ReadWriterControlChannel {
@@ -43,7 +43,7 @@ func (r ReadWriterControlChannel) SendCommand(cmd string) (rsp string, err error
 		}
 	}
 	if !bytes.HasPrefix(rst, []byte(responseTerminator)) {
-		err = multierr.Append(err, MissingResponseTerminator{
+		err = errors.Join(err, MissingResponseTerminator{
 			Response: dat,
 		})
 	}
