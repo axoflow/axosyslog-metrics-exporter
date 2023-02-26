@@ -35,12 +35,12 @@ loop:
 				continue
 			}
 			// sep could not be matched, revert
-			bs = append(bs, sep[:matched]) // reintroduce the optimistically left out partial separator
+			bs = append(bs, sep[:matched-cpl]) // reintroduce the optimistically left out partial separator
 			matched = 0
 		}
 		// no partial match
 		if i := bytes.Index(b, sep); i != -1 { // b contains sep starting at i
-			// split b after the separator
+			// split b before the separator
 			bs = append(bs, b[:i])
 			rst = b[i:]
 			break
