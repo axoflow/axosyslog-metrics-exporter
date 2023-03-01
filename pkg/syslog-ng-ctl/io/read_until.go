@@ -1,4 +1,5 @@
 // Copyright © 2023 Axoflow
+// All rights reserved.
 
 package io
 
