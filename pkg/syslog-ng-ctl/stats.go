@@ -10,11 +10,41 @@ import (
 	"strings"
 )
 
-func Stats(cc ControlChannel) (stats []Stat, errs error) {
+func Stats(cc ControlChannel) ([]Stat, error) {
 	rsp, err := cc.SendCommand("STATS")
 	if err != nil {
-		return stats, err
+		return nil, err
 	}
+
+	return parseStats(rsp)
+}
+
+type Stat struct {
+	SourceName     string
+	SourceID       string
+	SourceInstance string
+	SourceState    SourceState
+	Type           string
+	Number         uint64
+}
+
+type SourceState byte
+
+const (
+	SourceStateActive   SourceState = 'a'
+	SourceStateDynamic  SourceState = 'd'
+	SourceStateOrphaned SourceState = 'o'
+)
+
+type InvalidStatLine string
+
+func (err InvalidStatLine) Error() string {
+	return fmt.Sprintf("invalid stat line: %q", string(err))
+}
+
+const StatsHeader = "SourceName;SourceId;SourceInstance;State;Type;Number"
+
+func parseStats(rsp string) (stats []Stat, errs error) {
 	rsp = strings.TrimRight(rsp, "\n") // remove trailing new line
 	lines := strings.Split(rsp, "\n")
 	// TODO: sanity check: match header line
@@ -44,27 +74,4 @@ func Stats(cc ControlChannel) (stats []Stat, errs error) {
 		})
 	}
 	return
-}
-
-type Stat struct {
-	SourceName     string
-	SourceID       string
-	SourceInstance string
-	SourceState    SourceState
-	Type           string
-	Number         uint64
-}
-
-type SourceState byte
-
-const (
-	SourceStateActive   SourceState = 'a'
-	SourceStateDynamic  SourceState = 'd'
-	SourceStateOrphaned SourceState = 'o'
-)
-
-type InvalidStatLine string
-
-func (err InvalidStatLine) Error() string {
-	return fmt.Sprintf("invalid stat line: %q", string(err))
 }

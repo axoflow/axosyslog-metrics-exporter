@@ -3,6 +3,8 @@
 
 package syslogngctl
 
+import io_prometheus_client "github.com/prometheus/client_model/go"
+
 // Controller implements syslog-ng-ctl's functionality.
 //
 // Reference for available commands in syslog-ng-ctl's source code: https://github.com/syslog-ng/syslog-ng/blob/0e7c762c704efbda0ae10b61c35700ef0bdbb9c1/syslog-ng-ctl/syslog-ng-ctl.c#L111
@@ -40,4 +42,8 @@ func (c Controller) SetVerbose(on bool) error {
 
 func (c Controller) Stats() ([]Stat, error) {
 	return Stats(c.ControlChannel)
+}
+
+func (c Controller) StatsPrometheus() ([]io_prometheus_client.MetricFamily, error) {
+	return StatsPrometheus(c.ControlChannel)
 }
