@@ -10,10 +10,11 @@ import (
 
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
 
-func StatsPrometheus(cc ControlChannel) ([]io_prometheus_client.MetricFamily, error) {
+func StatsPrometheus(cc ControlChannel) ([]*io_prometheus_client.MetricFamily, error) {
 	rsp, err := cc.SendCommand("STATS PROMETHEUS")
 	if err != nil {
 		return nil, err
@@ -97,9 +98,7 @@ func StatsPrometheus(cc ControlChannel) ([]io_prometheus_client.MetricFamily, er
 				}
 			}
 		}
-		if len(errs) > 0 {
-			err = errors.Join(errs...)
-		}
+		err = errors.Join(errs...)
 	} else {
 		mfs, err = new(expfmt.TextParser).TextToMetricFamilies(strings.NewReader(rsp))
 		for _, mf := range mfs {
@@ -134,14 +133,7 @@ func StatsPrometheus(cc ControlChannel) ([]io_prometheus_client.MetricFamily, er
 		}
 	}
 
-	res := make([]io_prometheus_client.MetricFamily, 0, len(mfs))
-	for _, mf := range mfs {
-		if mf == nil {
-			continue
-		}
-		res = append(res, *mf)
-	}
-	return res, err
+	return maps.Values(mfs), err
 }
 
 func pushMetric(mfs map[string]*io_prometheus_client.MetricFamily, name string, typ io_prometheus_client.MetricType, labels []*io_prometheus_client.LabelPair, value float64) error {

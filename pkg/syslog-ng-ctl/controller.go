@@ -44,6 +44,6 @@ func (c Controller) Stats() ([]Stat, error) {
 	return Stats(c.ControlChannel)
 }
 
-func (c Controller) StatsPrometheus() ([]io_prometheus_client.MetricFamily, error) {
+func (c Controller) StatsPrometheus() ([]*io_prometheus_client.MetricFamily, error) {
 	return StatsPrometheus(c.ControlChannel)
 }

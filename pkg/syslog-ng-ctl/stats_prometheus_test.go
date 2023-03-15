@@ -15,7 +15,7 @@ import (
 )
 
 func TestStatsPrometheus(t *testing.T) {
-	expected := []io_prometheus_client.MetricFamily{
+	expected := []*io_prometheus_client.MetricFamily{
 		{
 			Name: amp("syslogng_events_allocated_bytes"),
 			Type: io_prometheus_client.MetricType_GAUGE.Enum(),
@@ -235,7 +235,7 @@ func TestStatsPrometheus(t *testing.T) {
 
 	testCases := map[string]struct {
 		cc       ControlChannel
-		expected []io_prometheus_client.MetricFamily
+		expected []*io_prometheus_client.MetricFamily
 	}{
 		"syslog-ng-ctl stats response for stats prometheus request": {
 			cc: ControlChannelFunc(func(cmd string) (rsp string, err error) {
@@ -380,20 +380,19 @@ syslogng_tagged_events_total{id=".source.#anon-source0",result="processed"} 0
 syslogng_tagged_events_total{id=".source.s_network",result="processed"} 0
 `
 
-func metricFamiliesToText(mfs []io_prometheus_client.MetricFamily) string {
+func metricFamiliesToText(mfs []*io_prometheus_client.MetricFamily) string {
 	var buf strings.Builder
-	for i := range mfs {
-		_, _ = expfmt.MetricFamilyToText(&buf, &mfs[i])
+	for _, mf := range mfs {
+		_, _ = expfmt.MetricFamilyToText(&buf, mf)
 	}
 	return buf.String()
 }
 
-func sortMetricFamilies(mfs []io_prometheus_client.MetricFamily) {
-	slices.SortFunc(mfs, func(a, b io_prometheus_client.MetricFamily) bool {
+func sortMetricFamilies(mfs []*io_prometheus_client.MetricFamily) {
+	slices.SortFunc(mfs, func(a, b *io_prometheus_client.MetricFamily) bool {
 		return *a.Name < *b.Name
 	})
-	for i := range mfs {
-		mf := &mfs[i]
+	for _, mf := range mfs {
 		for _, m := range mf.Metric {
 			slices.SortFunc(m.Label, func(a, b *io_prometheus_client.LabelPair) bool {
 				return *a.Name < *b.Name

@@ -50,7 +50,7 @@ func main() {
 					os.Exit(2)
 				}
 				for _, mf := range metrics {
-					_, _ = expfmt.MetricFamilyToText(os.Stdout, &mf)
+					_, _ = expfmt.MetricFamilyToText(os.Stdout, mf)
 				}
 			},
 		},
