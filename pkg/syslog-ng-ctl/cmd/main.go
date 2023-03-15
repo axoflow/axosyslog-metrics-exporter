@@ -9,7 +9,7 @@ import (
 	"net"
 	"os"
 
-	syslogngctl "github.com/axoflow/axo-edge/pkg/syslog-ng-ctl"
+	syslogngctl "github.com/axoflow/axoflow/go/pkg/syslog-ng-ctl"
 	"github.com/prometheus/common/expfmt"
 	"golang.org/x/exp/slices"
 )

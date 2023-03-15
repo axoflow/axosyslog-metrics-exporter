@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 
-	iox "github.com/axoflow/axo-edge/x/io"
+	iox "github.com/axoflow/axoflow/go/x/io"
 )
 
 func NewReadWriterControlChannel(rwCtor func() (io.ReadWriter, error)) *ReadWriterControlChannel {
