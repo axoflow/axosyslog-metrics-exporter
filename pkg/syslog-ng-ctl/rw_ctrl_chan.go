@@ -12,6 +12,11 @@ import (
 	iox "github.com/axoflow/axoflow/go/x/io"
 )
 
+// NewReadWriterControlChannel creates an object that can send a syslog-ng-ctl command and return the response.
+//
+// rwCtor should returns a ReadWriter with the open socket and an error. If the
+// ReadWriter also implements Closer, it will be closed at the end of the
+// interaction.
 func NewReadWriterControlChannel(rwCtor func() (io.ReadWriter, error)) *ReadWriterControlChannel {
 	return &ReadWriterControlChannel{
 		rwCtor: rwCtor,
