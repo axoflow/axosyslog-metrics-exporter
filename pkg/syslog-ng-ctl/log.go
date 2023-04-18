@@ -10,14 +10,22 @@ func getLog(cc ControlChannel, mode string) (on bool, err error) {
 	if err != nil {
 		return
 	}
-	switch strings.TrimRight(rsp, "\n") {
-	case mode + "=0":
-		on = false
-	case mode + "=1":
-		on = true
-	default:
-		err = UnexpectedResponse(rsp)
+	for _, line := range strings.Fields(rsp) {
+		switch line {
+		case "OK":
+		case mode + "=0":
+			on = false
+			return
+		case mode + "=1":
+			on = true
+			return
+		default:
+			err = UnexpectedResponse(rsp)
+			return
+		}
 	}
+
+	err = UnexpectedResponse(rsp)
 	return
 }
 
