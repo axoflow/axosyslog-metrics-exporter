@@ -12,11 +12,12 @@ func getLog(cc ControlChannel, mode string) (on bool, err error) {
 	}
 	for _, line := range strings.Fields(rsp) {
 		switch line {
-		case "OK":
-		case mode + "=0":
+		case "OK": // 3.35.1: OK verbose=0
+		case "syslog-ng", "log", "level", "set", "to": //  4.1.1: OK syslog-ng log level set to 0
+		case mode + "=0", "0":
 			on = false
 			return
-		case mode + "=1":
+		case mode + "=1", "1":
 			on = true
 			return
 		default:
