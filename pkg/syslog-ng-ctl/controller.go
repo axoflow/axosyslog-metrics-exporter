@@ -12,32 +12,16 @@ type Controller struct {
 	ControlChannel ControlChannel
 }
 
-func (c Controller) GetDebug() (on bool, err error) {
-	return GetDebug(c.ControlChannel)
+func (c Controller) GetLicenseInfo() (string, error) {
+	return GetLicenseInfo(c.ControlChannel)
 }
 
-func (c Controller) GetTrace() (on bool, err error) {
-	return GetTrace(c.ControlChannel)
-}
-
-func (c Controller) GetVerbose() (on bool, err error) {
-	return GetVerbose(c.ControlChannel)
+func (c Controller) Ping() error {
+	return Ping(c.ControlChannel)
 }
 
 func (c Controller) Reload() error {
 	return Reload(c.ControlChannel)
-}
-
-func (c Controller) SetDebug(on bool) error {
-	return SetDebug(c.ControlChannel, on)
-}
-
-func (c Controller) SetTrace(on bool) error {
-	return SetTrace(c.ControlChannel, on)
-}
-
-func (c Controller) SetVerbose(on bool) error {
-	return SetVerbose(c.ControlChannel, on)
 }
 
 func (c Controller) Stats() ([]Stat, error) {

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"os"
+	"strings"
 
 	syslogngctl "github.com/axoflow/axoflow/go/pkg/syslog-ng-ctl"
 	"github.com/prometheus/common/expfmt"
@@ -33,12 +34,33 @@ func main() {
 		Func func()
 	}{
 		{
+			Args: []string{"ping"},
+			Func: func() {
+				err := ctl.Ping()
+				if err != nil {
+					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while pinging syslog-ng: %s\n", err.Error())
+					os.Exit(2)
+				}
+			},
+		},
+		{
 			Args: []string{"reload"},
 			Func: func() {
 				if err := ctl.Reload(); err != nil {
 					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while reloading syslog-ng config: %s\n", err.Error())
 					os.Exit(2)
 				}
+			},
+		},
+		{
+			Args: []string{"show-license-info"},
+			Func: func() {
+				info, err := ctl.GetLicenseInfo()
+				if err != nil {
+					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while getting license info: %s\n", err.Error())
+					os.Exit(2)
+				}
+				_, _ = fmt.Fprintln(os.Stdout, info)
 			},
 		},
 		{
@@ -70,7 +92,13 @@ func main() {
 	for _, cmd := range cmds {
 		if slices.Equal(os.Args[1:], cmd.Args) {
 			cmd.Func()
-			break
+			return
 		}
 	}
+	_, _ = fmt.Fprintf(os.Stderr, "Unknown command %q\n", strings.Join(os.Args[1:], " "))
+	_, _ = fmt.Fprintln(os.Stderr, "Supported commands:")
+	for _, cmd := range cmds {
+		_, _ = fmt.Fprintf(os.Stderr, "\t%s\n", strings.Join(cmd.Args, " "))
+	}
+	os.Exit(1)
 }

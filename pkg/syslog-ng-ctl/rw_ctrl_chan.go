@@ -55,7 +55,15 @@ func (r ReadWriterControlChannel) SendCommand(cmd string) (rsp string, err error
 			Response: dat,
 		})
 	}
+
 	// TODO: check if there is something after the terminator
+
+	if dat, ok := bytes.CutPrefix(dat, []byte("FAIL ")); ok {
+		err = CommandFailure(string(bytes.ToValidUTF8(dat, []byte("�"))))
+		return
+	}
+
+	dat, _ = bytes.CutPrefix(dat, []byte("OK ")) // explicit success
 	rsp = string(bytes.ToValidUTF8(dat, []byte("�")))
 	return
 }
@@ -66,6 +74,12 @@ type MissingResponseTerminator struct {
 
 func (err MissingResponseTerminator) Error() string {
 	return fmt.Sprintf("missing response terminator %q", responseTerminator)
+}
+
+type CommandFailure string
+
+func (err CommandFailure) Error() string {
+	return string(err)
 }
 
 const responseTerminator string = ".\n"
