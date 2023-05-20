@@ -28,6 +28,14 @@ func (c Controller) Stats() ([]Stat, error) {
 	return Stats(c.ControlChannel)
 }
 
+func (c Controller) OriginalConfig() (string, error) {
+	return OriginalConfig(c.ControlChannel)
+}
+
+func (c Controller) PreprocessedConfig() (string, error) {
+	return PreprocessedConfig(c.ControlChannel)
+}
+
 func (c Controller) StatsPrometheus() ([]*io_prometheus_client.MetricFamily, error) {
 	return StatsPrometheus(c.ControlChannel)
 }
