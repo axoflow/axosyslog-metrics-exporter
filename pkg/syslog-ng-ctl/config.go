@@ -3,12 +3,14 @@
 
 package syslogngctl
 
+import "context"
+
 // OriginalConfig sends the CONFIG GET ORIGINAL command to syslog-ng
-func OriginalConfig(cc ControlChannel) (string, error) {
-	return cc.SendCommand("CONFIG GET ORIGINAL")
+func OriginalConfig(ctx context.Context, cc ControlChannel) (string, error) {
+	return cc.SendCommand(ctx, "CONFIG GET ORIGINAL")
 }
 
 // PreprocessedConfig sends the CONFIG GET PREPROCESSED command to syslog-ng
-func PreprocessedConfig(cc ControlChannel) (string, error) {
-	return cc.SendCommand("CONFIG GET PREPROCESSED")
+func PreprocessedConfig(ctx context.Context, cc ControlChannel) (string, error) {
+	return cc.SendCommand(ctx, "CONFIG GET PREPROCESSED")
 }

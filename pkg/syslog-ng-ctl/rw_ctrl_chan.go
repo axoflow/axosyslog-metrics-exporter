@@ -5,6 +5,7 @@ package syslogngctl
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -17,18 +18,21 @@ import (
 // rwCtor should returns a ReadWriter with the open socket and an error. If the
 // ReadWriter also implements Closer, it will be closed at the end of the
 // interaction.
-func NewReadWriterControlChannel(rwCtor func() (io.ReadWriter, error)) *ReadWriterControlChannel {
+func NewReadWriterControlChannel(rwCtor func(ctx context.Context) (io.ReadWriter, error)) *ReadWriterControlChannel {
 	return &ReadWriterControlChannel{
 		rwCtor: rwCtor,
 	}
 }
 
 type ReadWriterControlChannel struct {
-	rwCtor func() (io.ReadWriter, error)
+	rwCtor func(ctx context.Context) (io.ReadWriter, error)
 }
 
-func (r ReadWriterControlChannel) SendCommand(cmd string) (rsp string, err error) {
-	rw, err := r.rwCtor()
+func (r ReadWriterControlChannel) SendCommand(ctx context.Context, cmd string) (rsp string, err error) {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	rw, err := r.rwCtor(ctx)
 	if err != nil {
 		return
 	}
@@ -42,6 +46,10 @@ func (r ReadWriterControlChannel) SendCommand(cmd string) (rsp string, err error
 	}
 
 	// command is sent
+
+	if err = ctx.Err(); err != nil {
+		return
+	}
 
 	dat, rst, err := iox.ReadUntil(rw, []byte("\n"+responseTerminator))
 	if len(rst) > 0 {

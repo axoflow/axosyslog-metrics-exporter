@@ -4,6 +4,7 @@
 package syslogngctl
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -14,8 +15,8 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-func StatsPrometheus(cc ControlChannel) ([]*io_prometheus_client.MetricFamily, error) {
-	rsp, err := cc.SendCommand("STATS PROMETHEUS")
+func StatsPrometheus(ctx context.Context, cc ControlChannel) ([]*io_prometheus_client.MetricFamily, error) {
+	rsp, err := cc.SendCommand(ctx, "STATS PROMETHEUS")
 	if err != nil {
 		return nil, err
 	}

@@ -3,10 +3,13 @@
 
 package syslogngctl
 
-import "fmt"
+import (
+	"context"
+	"fmt"
+)
 
 type ControlChannel interface {
-	SendCommand(cmd string) (rsp string, err error)
+	SendCommand(ctx context.Context, cmd string) (rsp string, err error)
 }
 
 type UnexpectedResponse string

@@ -4,6 +4,7 @@
 package syslogngctl
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -238,14 +239,14 @@ func TestStatsPrometheus(t *testing.T) {
 		expected []*io_prometheus_client.MetricFamily
 	}{
 		"syslog-ng-ctl stats response for stats prometheus request": {
-			cc: ControlChannelFunc(func(cmd string) (rsp string, err error) {
+			cc: ControlChannelFunc(func(_ context.Context, cmd string) (rsp string, err error) {
 				require.Equal(t, "STATS PROMETHEUS", cmd)
 				return LEGACY_STATS_OUTPUT, nil
 			}),
 			expected: expected,
 		},
 		"syslog-ng stats prometheus response": {
-			cc: ControlChannelFunc(func(cmd string) (rsp string, err error) {
+			cc: ControlChannelFunc(func(_ context.Context, cmd string) (rsp string, err error) {
 				require.Equal(t, "STATS PROMETHEUS", cmd)
 				return PROMETHEUS_METRICS_OUTPUT, nil
 			}),
@@ -255,7 +256,7 @@ func TestStatsPrometheus(t *testing.T) {
 	for name, testCase := range testCases {
 		testCase := testCase
 		t.Run(name, func(t *testing.T) {
-			res, err := StatsPrometheus(testCase.cc)
+			res, err := StatsPrometheus(context.Background(), testCase.cc)
 			require.NoError(t, err)
 			sortMetricFamilies(res)
 			if !assert.ElementsMatch(t, testCase.expected, res) {
@@ -265,10 +266,10 @@ func TestStatsPrometheus(t *testing.T) {
 	}
 }
 
-type ControlChannelFunc func(cmd string) (rsp string, err error)
+type ControlChannelFunc func(ctx context.Context, cmd string) (rsp string, err error)
 
-func (fn ControlChannelFunc) SendCommand(cmd string) (rsp string, err error) {
-	return fn(cmd)
+func (fn ControlChannelFunc) SendCommand(ctx context.Context, cmd string) (rsp string, err error) {
+	return fn(ctx, cmd)
 }
 
 const LEGACY_STATS_OUTPUT = `SourceName;SourceId;SourceInstance;State;Type;Number

@@ -3,11 +3,14 @@
 
 package syslogngctl
 
-import "strings"
+import (
+	"context"
+	"strings"
+)
 
 // GetLicenseInfo sends the LICENSE command to syslog-ng
-func GetLicenseInfo(cc ControlChannel) (string, error) {
-	info, err := cc.SendCommand("LICENSE")
+func GetLicenseInfo(ctx context.Context, cc ControlChannel) (string, error) {
+	info, err := cc.SendCommand(ctx, "LICENSE")
 	info = strings.TrimSpace(info)
 	return info, err
 }

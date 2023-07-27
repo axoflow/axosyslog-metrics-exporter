@@ -4,9 +4,8 @@
 package main
 
 import (
+	"context"
 	"fmt"
-	"io"
-	"net"
 	"os"
 	"strings"
 
@@ -23,10 +22,7 @@ func main() {
 	}
 
 	ctl := syslogngctl.Controller{
-		ControlChannel: syslogngctl.NewReadWriterControlChannel(func() (io.ReadWriter, error) {
-			conn, err := net.Dial("unix", socketAddr)
-			return conn, err
-		}),
+		ControlChannel: syslogngctl.NewUnixDomainSocketControlChannel(socketAddr),
 	}
 
 	cmds := []struct {
@@ -36,7 +32,7 @@ func main() {
 		{
 			Args: []string{"ping"},
 			Func: func() {
-				err := ctl.Ping()
+				err := ctl.Ping(context.Background())
 				if err != nil {
 					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while pinging syslog-ng: %s\n", err.Error())
 					os.Exit(2)
@@ -46,7 +42,7 @@ func main() {
 		{
 			Args: []string{"reload"},
 			Func: func() {
-				if err := ctl.Reload(); err != nil {
+				if err := ctl.Reload(context.Background()); err != nil {
 					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while reloading syslog-ng config: %s\n", err.Error())
 					os.Exit(2)
 				}
@@ -55,7 +51,7 @@ func main() {
 		{
 			Args: []string{"show-license-info"},
 			Func: func() {
-				info, err := ctl.GetLicenseInfo()
+				info, err := ctl.GetLicenseInfo(context.Background())
 				if err != nil {
 					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while getting license info: %s\n", err.Error())
 					os.Exit(2)
@@ -66,7 +62,7 @@ func main() {
 		{
 			Args: []string{"stats", "prometheus"},
 			Func: func() {
-				metrics, err := ctl.StatsPrometheus()
+				metrics, err := ctl.StatsPrometheus(context.Background())
 				if err != nil {
 					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while querying prometheus stats: %s\n", err.Error())
 					os.Exit(2)
@@ -79,7 +75,7 @@ func main() {
 		{
 			Args: []string{"stats"},
 			Func: func() {
-				stats, err := ctl.Stats()
+				stats, err := ctl.Stats(context.Background())
 				if err != nil {
 					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while querying stats: %s\n", err.Error())
 					os.Exit(2)

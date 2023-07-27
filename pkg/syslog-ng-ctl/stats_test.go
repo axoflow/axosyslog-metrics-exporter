@@ -5,6 +5,7 @@ package syslogngctl
 
 import (
 	"bytes"
+	"context"
 	"io"
 	"strings"
 	"testing"
@@ -78,7 +79,7 @@ global;scratch_buffers_bytes;;a;queued;0
 		{SourceName: "global", SourceID: "scratch_buffers_bytes", SourceInstance: "", SourceState: SourceStateActive, Type: "queued", Number: 0},
 	}
 	request := bytes.Buffer{}
-	cc := NewReadWriterControlChannel(func() (io.ReadWriter, error) {
+	cc := NewReadWriterControlChannel(func(context.Context) (io.ReadWriter, error) {
 		return struct {
 			io.Reader
 			io.Writer
@@ -87,7 +88,7 @@ global;scratch_buffers_bytes;;a;queued;0
 			Writer: &request,
 		}, nil
 	})
-	res, err := Stats(cc)
+	res, err := Stats(context.Background(), cc)
 	require.NoError(t, err)
 	assert.Equal(t, expected, res)
 	assert.Equal(t, "STATS\n", request.String())

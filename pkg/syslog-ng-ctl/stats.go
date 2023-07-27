@@ -4,14 +4,15 @@
 package syslogngctl
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 )
 
-func Stats(cc ControlChannel) ([]Stat, error) {
-	rsp, err := cc.SendCommand("STATS")
+func Stats(ctx context.Context, cc ControlChannel) ([]Stat, error) {
+	rsp, err := cc.SendCommand(ctx, "STATS")
 	if err != nil {
 		return nil, err
 	}
