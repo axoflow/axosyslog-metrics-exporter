@@ -38,7 +38,10 @@ func (r ReadWriterControlChannel) SendCommand(ctx context.Context, cmd string) (
 	}
 
 	if closer, _ := rw.(io.Closer); closer != nil {
-		defer closer.Close()
+		go func() {
+			<-ctx.Done() // ctx.Done() will never return nil since ctx is created as a cancellable context by us
+			closer.Close()
+		}()
 	}
 
 	if _, err = io.WriteString(rw, cmd+"\n"); err != nil {
