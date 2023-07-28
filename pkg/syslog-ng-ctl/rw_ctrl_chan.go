@@ -45,6 +45,9 @@ func (r ReadWriterControlChannel) SendCommand(ctx context.Context, cmd string) (
 	}
 
 	if _, err = io.WriteString(rw, cmd+"\n"); err != nil {
+		if ctxerr := ctx.Err(); ctxerr != nil {
+			return rsp, ctxerr
+		}
 		return
 	}
 
@@ -55,6 +58,9 @@ func (r ReadWriterControlChannel) SendCommand(ctx context.Context, cmd string) (
 	}
 
 	dat, rst, err := iox.ReadUntil(rw, []byte("\n"+responseTerminator))
+	if ctxerr := ctx.Err(); ctxerr != nil {
+		return rsp, ctxerr
+	}
 	if len(rst) > 0 {
 		dat, rst = append(dat, rst[0]), rst[1:] // re-add last new line removed by ReadUntil
 		if err == io.EOF {
