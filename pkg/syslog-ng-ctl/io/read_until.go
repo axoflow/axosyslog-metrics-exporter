@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"io"
 
-	bytesx "github.com/axoflow/axoflow/go/x/bytes"
+	bytesx "github.com/axoflow/metrics-exporter/pkg/syslog-ng-ctl/bytes"
 )
 
 // ReadUntil reads from the specified reader until it reaches the specified separator (or an error occurs, which includes EOF).
@@ -36,7 +36,7 @@ loop:
 				rst = append(rst, b[cpl:]...)
 				break
 			}
-			if cpl == len(b) { // b only grows the partial match
+			if cpl > 0 && cpl == len(b) { // b only grows the partial match
 				continue
 			}
 			// sep could not be matched, revert

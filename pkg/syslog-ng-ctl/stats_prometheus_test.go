@@ -390,22 +390,22 @@ func metricFamiliesToText(mfs []*io_prometheus_client.MetricFamily) string {
 }
 
 func sortMetricFamilies(mfs []*io_prometheus_client.MetricFamily) {
-	slices.SortFunc(mfs, func(a, b *io_prometheus_client.MetricFamily) bool {
-		return *a.Name < *b.Name
+	slices.SortFunc(mfs, func(a, b *io_prometheus_client.MetricFamily) int {
+		return strings.Compare(*a.Name, *b.Name)
 	})
 	for _, mf := range mfs {
 		for _, m := range mf.Metric {
-			slices.SortFunc(m.Label, func(a, b *io_prometheus_client.LabelPair) bool {
-				return *a.Name < *b.Name
+			slices.SortFunc(m.Label, func(a, b *io_prometheus_client.LabelPair) int {
+				return strings.Compare(*a.Name, *b.Name)
 			})
 		}
-		slices.SortFunc(mf.Metric, func(a, b *io_prometheus_client.Metric) bool {
+		slices.SortFunc(mf.Metric, func(a, b *io_prometheus_client.Metric) int {
 			return slices.CompareFunc(a.Label, b.Label, func(a, b *io_prometheus_client.LabelPair) int {
 				if *a.Name != *b.Name {
 					return strings.Compare(*a.Name, *b.Name)
 				}
 				return strings.Compare(*a.Value, *b.Value)
-			}) < 0
+			})
 		})
 	}
 }
