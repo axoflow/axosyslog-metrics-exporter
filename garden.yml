@@ -1,0 +1,7 @@
+kind: Module
+description: syslog-ng metrics exporter image
+name: metrics-exporter-image
+type: container
+dockerfile: Dockerfile
+build:
+  targetImage: prod
