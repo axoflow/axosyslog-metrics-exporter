@@ -19,4 +19,6 @@
 
 dist/
 
-.vscode/
+.idea
+.vscode
+.garden

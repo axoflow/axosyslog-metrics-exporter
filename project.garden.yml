@@ -1,0 +1,7 @@
+kind: Project
+name: metrics-exporter
+defaultEnvironment: local
+dotIgnoreFiles: [.gitignore, .gardenignore]
+modules:
+  include:
+    - ./*garden.yml
