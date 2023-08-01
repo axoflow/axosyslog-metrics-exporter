@@ -8,7 +8,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"io/fs"
 	"net/http"
 	"os"
 	"time"
@@ -31,14 +30,8 @@ func main() {
 
 	socketAddr := os.Getenv("CONTROL_SOCKET")
 	if socketAddr == "" {
-		_, _ = fmt.Fprintln(os.Stderr, "Control socket not specified. Set CONTROL_SOCKET environment variable.")
-		os.Exit(1)
-	} else if stat, err := os.Stat(socketAddr); err != nil {
-		_, _ = fmt.Fprintf(os.Stderr, "Control socket file %q is not available", socketAddr)
-		os.Exit(1)
-	} else if stat.Mode().Type() != fs.ModeSocket {
-		_, _ = fmt.Fprintf(os.Stderr, "Given path %q is not control socket type", socketAddr)
-		os.Exit(1)
+		socketAddr = "/var/run/syslog-ng/syslog-ng.tcl"
+		_, _ = fmt.Fprintf(os.Stdout, "CONTROL_SOCKET environment variable not set, defaulting to %q", socketAddr)
 	}
 
 	ctl := syslogngctl.Controller{
