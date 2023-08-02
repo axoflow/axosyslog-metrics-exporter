@@ -6,6 +6,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,30 +18,53 @@ import (
 )
 
 const (
-	TIMEOUT_SYSLOG time.Duration = time.Second * 3
-	HTTP_PORT                    = 9999
+	DEFAULT_TIMEOUT_SYSLOG time.Duration = time.Second * 5
+	DEFAULT_SERVICE_PORT                 = "9577"
+	DEFAULT_SOCKET_ADDR                  = "/var/run/syslog-ng/syslog-ng.tcl"
 )
 
 var (
 	Version = "dev" // should be set build-time, see Makefile
 )
 
+type RunArgs struct {
+	SocketAddr     string
+	ServicePort    string
+	RequestTimeout string
+}
+
+func envOrDef(envName string, def string) (res string) {
+	res = os.Getenv(envName)
+	if res == "" {
+		res = def
+	}
+	return
+}
+
 func main() {
+	runArgs := RunArgs{}
+
 	fmt.Fprintf(os.Stdout, "metrics exporter version %q\n", Version)
 
-	socketAddr := os.Getenv("CONTROL_SOCKET")
-	if socketAddr == "" {
-		socketAddr = "/var/run/syslog-ng/syslog-ng.tcl"
-		_, _ = fmt.Fprintf(os.Stdout, "CONTROL_SOCKET environment variable not set, defaulting to %q", socketAddr)
+	flag.StringVar(&runArgs.SocketAddr, "socket.path", envOrDef("CONTROL_SOCKET", DEFAULT_SOCKET_ADDR), "syslog-ng control socket path")
+	flag.StringVar(&runArgs.ServicePort, "service.port", envOrDef("SERVICE_PORT", DEFAULT_SERVICE_PORT), "service port")
+	flag.StringVar(&runArgs.RequestTimeout, "service.timeout", envOrDef("SERVICE_TIMEOUT", DEFAULT_TIMEOUT_SYSLOG.String()), "request timeout")
+
+	flag.Parse()
+
+	requestTimeout, err := time.ParseDuration(runArgs.RequestTimeout)
+	if err != nil {
+		requestTimeout = DEFAULT_TIMEOUT_SYSLOG
 	}
 
 	ctl := syslogngctl.Controller{
-		ControlChannel: syslogngctl.NewUnixDomainSocketControlChannel(socketAddr),
+		ControlChannel: syslogngctl.NewUnixDomainSocketControlChannel(runArgs.SocketAddr),
 	}
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
-		subCtx, cancel := context.WithTimeout(r.Context(), TIMEOUT_SYSLOG)
+
+		subCtx, cancel := context.WithTimeout(r.Context(), requestTimeout)
 		defer cancel()
 		mfs, err := ctl.StatsPrometheus(subCtx)
 		if err != nil {
@@ -65,7 +89,7 @@ func main() {
 	})
 
 	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
-		subCtx, cancel := context.WithTimeout(r.Context(), TIMEOUT_SYSLOG)
+		subCtx, cancel := context.WithTimeout(r.Context(), requestTimeout)
 		defer cancel()
 		err := ctl.Ping(subCtx)
 		if err != nil {
@@ -78,8 +102,9 @@ func main() {
 		}
 	})
 
-	fmt.Fprintf(os.Stdout, "listening on port %v, \n", HTTP_PORT)
-	fmt.Fprintf(os.Stdout, "syslog-ng control socket path %v, \n", socketAddr)
+	fmt.Fprintf(os.Stdout, "listening on port: %v\n", runArgs.ServicePort)
+	fmt.Fprintf(os.Stdout, "syslog-ng control socket path: %v\n", runArgs.SocketAddr)
+	fmt.Fprintf(os.Stdout, "service timeout: %v\n", requestTimeout.String())
 
-	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%v", HTTP_PORT), mux))
+	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%v", runArgs.ServicePort), mux))
 }
