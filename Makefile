@@ -12,6 +12,8 @@ BIN ?= ${PWD}/bin/${GOOS}/${GOARCH}
 
 LICENSEI := ${BIN}/licensei
 LICENSEI_VERSION = v0.8.0
+GOLANGCI_LINT := ${BIN}/golangci-lint
+GOLANGCI_LINT_VERSION := v1.51.2
 
 .PHONY: fmt
 fmt: ## format Go sources
@@ -36,6 +38,10 @@ docker-build: ## builds docker container locally
 .PHONY: test
 test: ## runs unit tests
 	go test ./...
+
+.PHONY: lint
+lint: ${GOLANGCI_LINT} ## check coding style
+	${GOLANGCI_LINT} run ${LINTER_FLAGS}
 
 ## =========================
 ## ==  Tool dependencies  ==
@@ -65,6 +71,14 @@ ifndef GITHUB_TOKEN
 	@>&2 echo "(Hint: If too many licenses are missing, try specifying a Github token via the environment variable GITHUB_TOKEN.)"
 endif
 	${LICENSEI} cache
+
+${GOLANGCI_LINT}: ${GOLANGCI_LINT}_${GOLANGCI_LINT_VERSION}_${GOVERSION} | ${BIN}
+	ln -sf $(notdir $<) $@
+
+${GOLANGCI_LINT}_${GOLANGCI_LINT_VERSION}_${GOVERSION}: IMPORT_PATH := github.com/golangci/golangci-lint/cmd/golangci-lint
+${GOLANGCI_LINT}_${GOLANGCI_LINT_VERSION}_${GOVERSION}: VERSION := ${GOLANGCI_LINT_VERSION}
+${GOLANGCI_LINT}_${GOLANGCI_LINT_VERSION}_${GOVERSION}: | ${BIN}
+	${go_install_binary}
 
 define go_install_binary
 find ${BIN} -name '$(notdir ${IMPORT_PATH})_*' -exec rm {} +

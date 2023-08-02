@@ -1,0 +1,59 @@
+name: Go basic checks
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-license:
+    name: Check licenses
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.20'
+    - name: Check out code
+      uses: actions/checkout@v3
+    - name: Cache licenses
+      uses: actions/cache@v3
+      with:
+        key: licensei-cache-${{ hashFiles('go.sum') }}
+        path: ".licensei.cache"
+        restore-keys: licensei-cache
+    - name: Ensure licensei cache
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      run: make .licensei.cache
+    - name: Run license check
+      run: make check-license
+
+  run-test:
+    name: Go tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.20'
+    - name: Check out code
+      uses: actions/checkout@v3
+    - name: Run tests
+      run: make test
+
+  run-lint:
+    name: Go lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: '1.20'
+    - name: Check out code
+      uses: actions/checkout@v3
+    - name: Run lint
+      run: make lint
+      env:
+        LINTER_FLAGS: '--timeout 5m'
