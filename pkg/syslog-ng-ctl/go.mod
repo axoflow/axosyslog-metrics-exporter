@@ -1,4 +1,4 @@
-module github.com/axoflow/metrics-exporter/pkg/syslog-ng-ctl
+module github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl
 
 go 1.20
 

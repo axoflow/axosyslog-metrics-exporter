@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"io"
 
-	bytesx "github.com/axoflow/metrics-exporter/pkg/syslog-ng-ctl/bytes"
+	bytesx "github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl/bytes"
 )
 
 // ReadUntil reads from the specified reader until it reaches the specified separator (or an error occurs, which includes EOF).

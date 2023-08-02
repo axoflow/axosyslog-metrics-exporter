@@ -1,11 +1,11 @@
-module github.com/axoflow/metrics-exporter
+module github.com/axoflow/axosyslog-metrics-exporter
 
 go 1.20
 
-replace github.com/axoflow/metrics-exporter/pkg/syslog-ng-ctl => ./pkg/syslog-ng-ctl
+replace github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl => ./pkg/syslog-ng-ctl
 
 require (
-	github.com/axoflow/metrics-exporter/pkg/syslog-ng-ctl v0.0.0-00010101000000-000000000000
+	github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl v0.0.0-00010101000000-000000000000
 	github.com/prometheus/common v0.44.0
 )
 
