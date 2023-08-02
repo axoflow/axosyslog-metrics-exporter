@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"io"
 
-	iox "github.com/axoflow/metrics-exporter/pkg/syslog-ng-ctl/io"
+	iox "github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl/io"
 )
 
 // NewReadWriterControlChannel creates an object that can send a syslog-ng-ctl command and return the response.

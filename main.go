@@ -11,9 +11,10 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"path/filepath"
 	"time"
 
-	syslogngctl "github.com/axoflow/metrics-exporter/pkg/syslog-ng-ctl"
+	syslogngctl "github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl"
 	"github.com/prometheus/common/expfmt"
 )
 
@@ -44,7 +45,7 @@ func envOrDef(envName string, def string) (res string) {
 func main() {
 	runArgs := RunArgs{}
 
-	fmt.Fprintf(os.Stdout, "metrics exporter version %q\n", Version)
+	fmt.Fprintf(os.Stdout, "%v version %q\n", filepath.Base(os.Args[0]), Version)
 
 	flag.StringVar(&runArgs.SocketAddr, "socket.path", envOrDef("CONTROL_SOCKET", DEFAULT_SOCKET_ADDR), "syslog-ng control socket path")
 	flag.StringVar(&runArgs.ServicePort, "service.port", envOrDef("SERVICE_PORT", DEFAULT_SERVICE_PORT), "service port")

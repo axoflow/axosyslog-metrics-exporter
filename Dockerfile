@@ -32,5 +32,5 @@ FROM gcr.io/distroless/base-debian11:latest as prod
 
 WORKDIR /
 COPY --from=builder /LICENSE /
-COPY --from=builder /app/dist/metrics-exporter .
-ENTRYPOINT ["/metrics-exporter"]
+COPY --from=builder /app/dist/axosyslog-metrics-exporter .
+ENTRYPOINT ["/axosyslog-metrics-exporter"]

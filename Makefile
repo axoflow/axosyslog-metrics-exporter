@@ -25,7 +25,7 @@ tidy: ## ensures go.mod dependecies
 
 .PHONY: build
 build: ## build
-	go build -o $(DIST)/metrics-exporter -ldflags="$(GO_LDFLAGS)" $(BUILDFLAGS) ./
+	go build -o $(DIST)/axosyslog-metrics-exporter -ldflags="$(GO_LDFLAGS)" $(BUILDFLAGS) ./
 
 .PHONY: run
 run: ## runs project locally with go run
@@ -33,7 +33,7 @@ run: ## runs project locally with go run
 
 .PHONY: docker-build
 docker-build: ## builds docker container locally
-	docker build . -t "axoflow.local.dev/metrics-exporter:latest" -f Dockerfile
+	docker build . -t "axoflow.local.dev/axosyslog-metrics-exporter:latest" -f Dockerfile
 
 .PHONY: test
 test: ## runs unit tests

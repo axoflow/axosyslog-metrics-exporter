@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	syslogngctl "github.com/axoflow/metrics-exporter/pkg/syslog-ng-ctl"
+	syslogngctl "github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl"
 	"github.com/prometheus/common/expfmt"
 	"golang.org/x/exp/slices"
 )
