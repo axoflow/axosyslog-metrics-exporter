@@ -3,6 +3,5 @@ description: syslog-ng metrics exporter image
 name: metrics-exporter-image
 type: container
 dockerfile: Dockerfile
-image: ${var.imageRegistry}/${var.imageRepository}/metrics-exporter
 build:
   targetImage: prod
