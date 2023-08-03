@@ -40,7 +40,7 @@ Options:
 ### Docker
 
 ```
-docker run -d -p 9577:9577 -v /var/*/syslog-ng/syslog-ng.ctl:/syslog-ng.ctl \
+docker run -d -p 9577:9577 -v $(echo /var/*/syslog-ng/syslog-ng.ctl):/syslog-ng.ctl \
   ghcr.io/axoflow/axosyslog-metrics-exporter:latest --socket.path=/syslog-ng.ctl
 ```
 
