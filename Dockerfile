@@ -5,6 +5,7 @@ RUN apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 COPY LICENSE /
+COPY NOTICE /
 
 WORKDIR /app
 
@@ -26,9 +27,6 @@ RUN make build
 # Use distroless as minimal base image to package the axo-controller binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/base-debian11:latest as prod
-
-# add shell for debugging purposes
-# COPY --from=busybox:1.35.0-uclibc /bin /bin
 
 WORKDIR /
 COPY --from=builder /LICENSE /
