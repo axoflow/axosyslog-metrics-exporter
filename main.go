@@ -21,7 +21,7 @@ import (
 const (
 	DEFAULT_TIMEOUT_SYSLOG time.Duration = time.Second * 5
 	DEFAULT_SERVICE_PORT                 = "9577"
-	DEFAULT_SOCKET_ADDR                  = "/var/run/syslog-ng/syslog-ng.tcl"
+	DEFAULT_SOCKET_ADDR                  = "/var/run/syslog-ng/syslog-ng.ctl"
 )
 
 var (

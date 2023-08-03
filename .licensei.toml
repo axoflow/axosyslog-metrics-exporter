@@ -8,12 +8,7 @@ approved = [
 ]
 
 ignored = [
-  "github.com/gogo/protobuf", # Custom license
   "google.golang.org/protobuf", # Unsupported VCS, bsd-3-clause
-  "sigs.k8s.io/yaml", # MIT + Custom license
-  "github.com/hashicorp/go-envparse", # MPL-2.0, but we should get rid of it when replacing node_exporter
-  "emperror.dev/errors", # MIT
-  "github.com/soundcloud/go-runit", # repository removed, indirect, MIT
 ]
 
 [header]
