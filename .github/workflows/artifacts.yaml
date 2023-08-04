@@ -67,12 +67,13 @@ jobs:
         with:
           images: ${{ steps.image-name.outputs.value }}
           flavor: |
-            latest = false
+            latest = true
           tags: |
             type=ref,event=branch
             type=ref,event=pr,prefix=pr-
             type=semver,pattern={{raw}}
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ github.sha }},enable=true
 
       # Multiple exporters are not supported yet
       # See https://github.com/moby/buildkit/pull/2760
