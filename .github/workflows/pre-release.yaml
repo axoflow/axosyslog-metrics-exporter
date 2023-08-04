@@ -1,8 +1,9 @@
-name: Release
+name: Pre-release
+# build and tag image for semver pre-releases (like 1.2.3-dev)
 
 on:
   push:
-    tags: ["[0-9]+.[0-9]+.[0-9]+"]
+    tags: ["[0-9]+.[0-9]+.[0-9]+-*"]
 
 permissions:
   contents: read
@@ -13,7 +14,7 @@ jobs:
     uses: ./.github/workflows/artifacts.yaml
     with:
       publish: true
-      release: true
+      release: false
     permissions:
       contents: read
       packages: write
