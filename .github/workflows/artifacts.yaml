@@ -70,7 +70,7 @@ jobs:
             latest = false
           tags: |
             type=semver,pattern={{raw}}
-            type=raw,value=latest,enable={{inputs.release}}
+            type=raw,value=latest,enable=${{ inputs.release }}
 
       # Multiple exporters are not supported yet
       # See https://github.com/moby/buildkit/pull/2760
