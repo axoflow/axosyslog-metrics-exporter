@@ -16,17 +16,14 @@ package syslogngctl
 
 import (
 	"context"
-	"errors"
-	"io"
+	"strings"
 )
 
-// Ping checks whether syslog-ng is listening on the control channel
-func Ping(ctx context.Context, cc ControlChannel) error {
-	// send an inexpensive but valid command to prevent error logs
-	rsp, err := License(ctx, cc)
-
-	if err != nil && errors.Is(err, io.EOF) && rsp == "" {
-		return nil // support very old syslog-ng versions that didn't support the LICENSE command
-	}
-	return err
+// License returns the license of syslog-ng as reported by itself
+//
+// OSE response: You are using the Open Source Edition of syslog-ng.
+// PE response: TODO
+func License(ctx context.Context, cc ControlChannel) (string, error) {
+	rsp, err := cc.SendCommand(ctx, "LICENSE")
+	return strings.TrimSpace(rsp), err
 }
