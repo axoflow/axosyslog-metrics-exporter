@@ -42,6 +42,7 @@ var (
 type RunArgs struct {
 	SocketAddr     string
 	ServicePort    string
+	ServiceAddress string
 	RequestTimeout string
 }
 
@@ -59,10 +60,14 @@ func main() {
 	fmt.Fprintf(os.Stdout, "%v version %q\n", filepath.Base(os.Args[0]), Version)
 
 	flag.StringVar(&runArgs.SocketAddr, "socket.path", envOrDef("CONTROL_SOCKET", DEFAULT_SOCKET_ADDR), "syslog-ng control socket path")
-	flag.StringVar(&runArgs.ServicePort, "service.port", envOrDef("SERVICE_PORT", DEFAULT_SERVICE_PORT), "service port")
+	flag.StringVar(&runArgs.ServicePort, "service.port", envOrDef("SERVICE_PORT", DEFAULT_SERVICE_PORT), "service bind port")
+	flag.StringVar(&runArgs.ServiceAddress, "service.address", envOrDef("SERVICE_ADDRESS", ""), "service bind address in [host]:port format (overwrites service.port)")
 	flag.StringVar(&runArgs.RequestTimeout, "service.timeout", envOrDef("SERVICE_TIMEOUT", DEFAULT_TIMEOUT_SYSLOG.String()), "request timeout")
 
 	flag.Parse()
+	if runArgs.ServiceAddress == "" {
+		runArgs.ServiceAddress = fmt.Sprintf(":%v", runArgs.ServicePort)
+	}
 
 	requestTimeout, err := time.ParseDuration(runArgs.RequestTimeout)
 	if err != nil {
@@ -118,5 +123,6 @@ func main() {
 	fmt.Fprintf(os.Stdout, "syslog-ng control socket path: %v\n", runArgs.SocketAddr)
 	fmt.Fprintf(os.Stdout, "service timeout: %v\n", requestTimeout.String())
 
-	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%v", runArgs.ServicePort), mux))
+	err = http.ListenAndServe(runArgs.ServiceAddress, mux)
+	fmt.Println(err)
 }
