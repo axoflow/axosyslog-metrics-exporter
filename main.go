@@ -22,17 +22,18 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"time"
 
 	syslogngctl "github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl"
 	"github.com/prometheus/common/expfmt"
+	"golang.org/x/exp/slog"
 )
 
 const (
 	DEFAULT_TIMEOUT_SYSLOG time.Duration = time.Second * 5
 	DEFAULT_SERVICE_PORT                 = "9577"
 	DEFAULT_SOCKET_ADDR                  = "/var/run/syslog-ng/syslog-ng.ctl"
+	license                              = "Apache License, Version 2.0"
 )
 
 var (
@@ -42,6 +43,7 @@ var (
 type RunArgs struct {
 	SocketAddr     string
 	ServicePort    string
+	ServiceAddress string
 	RequestTimeout string
 }
 
@@ -54,16 +56,26 @@ func envOrDef(envName string, def string) (res string) {
 }
 
 func main() {
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	slog.SetDefault(logger)
+
 	runArgs := RunArgs{}
 
-	fmt.Fprintf(os.Stdout, "%v version %q\n", filepath.Base(os.Args[0]), Version)
+	logger.Info("starting axosyslog-metrics-exporter", "version", Version, "license", license)
 
 	flag.StringVar(&runArgs.SocketAddr, "socket.path", envOrDef("CONTROL_SOCKET", DEFAULT_SOCKET_ADDR), "syslog-ng control socket path")
-	flag.StringVar(&runArgs.ServicePort, "service.port", envOrDef("SERVICE_PORT", DEFAULT_SERVICE_PORT), "service port")
+	flag.StringVar(&runArgs.ServicePort, "service.port", envOrDef("SERVICE_PORT", DEFAULT_SERVICE_PORT), "service bind port")
+	flag.StringVar(&runArgs.ServiceAddress, "service.address", envOrDef("SERVICE_ADDRESS", ""), "service bind address in [host]:port format (overwrites service.port)")
 	flag.StringVar(&runArgs.RequestTimeout, "service.timeout", envOrDef("SERVICE_TIMEOUT", DEFAULT_TIMEOUT_SYSLOG.String()), "request timeout")
 
 	flag.Parse()
+	if runArgs.ServiceAddress == "" {
+		runArgs.ServiceAddress = fmt.Sprintf(":%v", runArgs.ServicePort)
+	}
 
+	logger.Info("listening", "bindAddress", runArgs.ServiceAddress, "requestTimeout", runArgs.RequestTimeout)
+	_, err := os.Stat(runArgs.SocketAddr)
+	logger.Info("testing syslog-ng control socket path", "socketPath", runArgs.SocketAddr, "found", err == nil, "error", err)
 	requestTimeout, err := time.ParseDuration(runArgs.RequestTimeout)
 	if err != nil {
 		requestTimeout = DEFAULT_TIMEOUT_SYSLOG
@@ -75,12 +87,14 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {
+		logger := logger.With("remote", r.RemoteAddr, "userAgent", r.UserAgent(), "path", "/metrics")
 
 		subCtx, cancel := context.WithTimeout(r.Context(), requestTimeout)
 		defer cancel()
 		mfs, err := ctl.StatsPrometheus(subCtx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
+			logger.Error("socket command failed", "error", err)
 			return
 		}
 
@@ -90,33 +104,40 @@ func main() {
 			_, err := expfmt.MetricFamilyToText(&resp, mf)
 			if err != nil {
 				http.Error(w, err.Error(), http.StatusInternalServerError)
+				logger.Error("metrics conversion failed", "error", err)
 				return
 			}
 		}
 
-		_, err = io.Copy(w, &resp)
+		bodyLen, err := io.Copy(w, &resp)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("writing response failed", "error", err)
+			return
 		}
+		logger.Info("writing response", "bodyLength", bodyLen)
 	})
 
 	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
+		logger := logger.With("remote", r.RemoteAddr, "userAgent", r.UserAgent(), "path", "/ping")
+
 		subCtx, cancel := context.WithTimeout(r.Context(), requestTimeout)
 		defer cancel()
 		err := ctl.Ping(subCtx)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("socket command failed", "error", err)
 			return
 		}
 		_, err = w.Write([]byte(`PONG`))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.Error("writing response failed", "error", err)
+			return
 		}
+		logger.Info("pong")
 	})
 
-	fmt.Fprintf(os.Stdout, "listening on port: %v\n", runArgs.ServicePort)
-	fmt.Fprintf(os.Stdout, "syslog-ng control socket path: %v\n", runArgs.SocketAddr)
-	fmt.Fprintf(os.Stdout, "service timeout: %v\n", requestTimeout.String())
-
-	fmt.Println(http.ListenAndServe(fmt.Sprintf(":%v", runArgs.ServicePort), mux))
+	err = http.ListenAndServe(runArgs.ServiceAddress, mux)
+	logger.Info("exiting", "error", err)
 }
