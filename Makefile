@@ -21,7 +21,7 @@ fmt: ## format Go sources
 
 .PHONY: tidy
 tidy: ## ensures go.mod dependecies
-	find . -iname "go.mod" | sort -r | xargs -L1 sh -c 'set -x; cd $$(dirname $$0); go mod tidy'
+	$(call on_all_modules, go mod tidy)
 
 .PHONY: build
 build: ## build
@@ -37,7 +37,7 @@ docker-build: ## builds docker container locally
 
 .PHONY: test
 test: ## runs unit tests
-	find . -name go.mod -execdir go test ./... \;
+	$(call on_all_modules, go test ./...)
 
 .PHONY: lint
 lint: ${GOLANGCI_LINT} ## check coding style
@@ -84,6 +84,16 @@ define go_install_binary
 find ${BIN} -name '$(notdir ${IMPORT_PATH})_*' -exec rm {} +
 GOBIN=${BIN} go install ${IMPORT_PATH}@${VERSION}
 mv ${BIN}/$(notdir ${IMPORT_PATH}) $@
+endef
+
+define on_all_modules
+	@for dir in $$(find . -name "go.mod" | xargs dirname); do \
+	( \
+		set -x; \
+		cd $$dir; \
+		$(1); \
+	) \
+	done
 endef
 
 # Self-documenting Makefile
