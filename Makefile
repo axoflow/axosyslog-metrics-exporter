@@ -37,7 +37,7 @@ docker-build: ## builds docker container locally
 
 .PHONY: test
 test: ## runs unit tests
-	go test ./...
+	find . -name go.mod -execdir go test ./... \;
 
 .PHONY: lint
 lint: ${GOLANGCI_LINT} ## check coding style
