@@ -3,5 +3,6 @@ description: syslog-ng metrics exporter image
 name: axosyslog-metrics-exporter-image
 type: container
 dockerfile: Dockerfile
+allowPublish: false
 build:
   targetImage: prod
