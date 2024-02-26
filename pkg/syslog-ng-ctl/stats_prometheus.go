@@ -119,37 +119,38 @@ func StatsPrometheus(ctx context.Context, cc ControlChannel) ([]*io_prometheus_c
 	var mfs map[string]*io_prometheus_client.MetricFamily
 	if strings.HasPrefix(rsp, StatsHeader) {
 		mfs, err = createMetricsFromLegacyStats(rsp)
-	} else {
-		mfs, err = new(expfmt.TextParser).TextToMetricFamilies(strings.NewReader(rsp))
-		for _, mf := range mfs {
-			if mf.Type == nil {
-				continue
-			}
-			if *mf.Type != io_prometheus_client.MetricType_UNTYPED {
-				continue
-			}
-			if mf.Name == nil {
-				continue
-			}
+		return maps.Values(mfs), err
+	}
 
-			switch {
-			case strings.HasSuffix(*mf.Name, "_events_total"):
-				for _, m := range mf.Metric {
-					m.Counter = &io_prometheus_client.Counter{
-						Value: m.Untyped.Value,
-					}
-					m.Untyped = nil
+	mfs, err = new(expfmt.TextParser).TextToMetricFamilies(strings.NewReader(rsp))
+	for _, mf := range mfs {
+		if mf.Type == nil {
+			continue
+		}
+		if *mf.Type != io_prometheus_client.MetricType_UNTYPED {
+			continue
+		}
+		if mf.Name == nil {
+			continue
+		}
+
+		switch {
+		case strings.HasSuffix(*mf.Name, "_events_total"):
+			for _, m := range mf.Metric {
+				m.Counter = &io_prometheus_client.Counter{
+					Value: m.Untyped.Value,
 				}
-				mf.Type = io_prometheus_client.MetricType_COUNTER.Enum()
-			default:
-				for _, m := range mf.Metric {
-					m.Gauge = &io_prometheus_client.Gauge{
-						Value: m.Untyped.Value,
-					}
-					m.Untyped = nil
-				}
-				mf.Type = io_prometheus_client.MetricType_GAUGE.Enum()
+				m.Untyped = nil
 			}
+			mf.Type = io_prometheus_client.MetricType_COUNTER.Enum()
+		default:
+			for _, m := range mf.Metric {
+				m.Gauge = &io_prometheus_client.Gauge{
+					Value: m.Untyped.Value,
+				}
+				m.Untyped = nil
+			}
+			mf.Type = io_prometheus_client.MetricType_GAUGE.Enum()
 		}
 	}
 
