@@ -26,6 +26,90 @@ import (
 	"golang.org/x/exp/slices"
 )
 
+func createMetricsFromLegacyStats(legacyStats string) (map[string]*io_prometheus_client.MetricFamily, error) {
+	var stats []Stat
+	var err error
+
+	stats, err = parseStats(legacyStats)
+	if err != nil {
+		return nil, err
+	}
+
+	mfs := make(map[string]*io_prometheus_client.MetricFamily)
+	var errs []error
+	const metric_ns = "syslogng"
+	for _, stat := range stats {
+		switch {
+		case stat.SourceName == "global":
+			switch stat.SourceID {
+			case "scratch_buffers_count", "scratch_buffers_bytes":
+				if err := pushMetric(mfs, metric_ns+"_"+stat.SourceID, io_prometheus_client.MetricType_GAUGE, nil, float64(stat.Number)); err != nil {
+					errs = append(errs, err)
+				}
+			case "msg_allocated_bytes":
+				if err := pushMetric(mfs, metric_ns+"_events_allocated_bytes", io_prometheus_client.MetricType_GAUGE, nil, float64(stat.Number)); err != nil {
+					errs = append(errs, err)
+				}
+			default:
+				// ignore other global stats
+			}
+		case stat.SourceName == "filter":
+			labels := []*io_prometheus_client.LabelPair{
+				newLabel("id", stat.SourceID),
+				newLabel("result", stat.Type),
+			}
+			if err := pushMetric(mfs, metric_ns+"_filtered_events_total", io_prometheus_client.MetricType_COUNTER, labels, float64(stat.Number)); err != nil {
+				errs = append(errs, err)
+			}
+		case strings.HasPrefix(stat.SourceName, "src.") && stat.SourceID != "" && stat.Type == "processed":
+			labels := []*io_prometheus_client.LabelPair{
+				newLabel("id", stat.SourceID),
+				newLabel("result", stat.Type),
+			}
+			if stat.SourceInstance != "" {
+				labels = append(labels, newLabel("driver_instance", stat.SourceInstance))
+			}
+			if err := pushMetric(mfs, metric_ns+"_input_events_total", io_prometheus_client.MetricType_COUNTER, labels, float64(stat.Number)); err != nil {
+				errs = append(errs, err)
+			}
+		case strings.HasPrefix(stat.SourceName, "dst.") && slices.Contains([]string{"dropped", "queued", "written"}, stat.Type):
+			result := stat.Type
+			if result == "written" {
+				result = "delivered"
+			}
+			labels := []*io_prometheus_client.LabelPair{
+				newLabel("id", stat.SourceID),
+				newLabel("result", result),
+			}
+			if stat.SourceInstance != "" {
+				labels = append(labels, newLabel("driver_instance", stat.SourceInstance))
+			}
+			if err := pushMetric(mfs, metric_ns+"_output_events_total", io_prometheus_client.MetricType_COUNTER, labels, float64(stat.Number)); err != nil {
+				errs = append(errs, err)
+			}
+		case stat.SourceName == "parser":
+			labels := []*io_prometheus_client.LabelPair{
+				newLabel("id", stat.SourceID),
+				newLabel("result", stat.Type),
+			}
+			if err := pushMetric(mfs, metric_ns+"_parsed_events_total", io_prometheus_client.MetricType_COUNTER, labels, float64(stat.Number)); err != nil {
+				errs = append(errs, err)
+			}
+		case stat.SourceName == "tag":
+			labels := []*io_prometheus_client.LabelPair{
+				newLabel("id", stat.SourceID),
+				newLabel("result", stat.Type),
+			}
+			if err := pushMetric(mfs, metric_ns+"_tagged_events_total", io_prometheus_client.MetricType_COUNTER, labels, float64(stat.Number)); err != nil {
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	err = errors.Join(errs...)
+	return mfs, err
+}
+
 func StatsPrometheus(ctx context.Context, cc ControlChannel) ([]*io_prometheus_client.MetricFamily, error) {
 	rsp, err := cc.SendCommand(ctx, "STATS PROMETHEUS")
 	if err != nil {
@@ -34,83 +118,7 @@ func StatsPrometheus(ctx context.Context, cc ControlChannel) ([]*io_prometheus_c
 
 	var mfs map[string]*io_prometheus_client.MetricFamily
 	if strings.HasPrefix(rsp, StatsHeader) {
-		// received legacy-style stats
-		var stats []Stat
-		stats, err = parseStats(rsp)
-		if err != nil {
-			return nil, err
-		}
-		mfs = make(map[string]*io_prometheus_client.MetricFamily)
-		var errs []error
-		const metric_ns = "syslogng"
-		for _, stat := range stats {
-			switch {
-			case stat.SourceName == "global":
-				switch stat.SourceID {
-				case "scratch_buffers_count", "scratch_buffers_bytes":
-					if err := pushMetric(mfs, metric_ns+"_"+stat.SourceID, io_prometheus_client.MetricType_GAUGE, nil, float64(stat.Number)); err != nil {
-						errs = append(errs, err)
-					}
-				case "msg_allocated_bytes":
-					if err := pushMetric(mfs, metric_ns+"_events_allocated_bytes", io_prometheus_client.MetricType_GAUGE, nil, float64(stat.Number)); err != nil {
-						errs = append(errs, err)
-					}
-				default:
-					// ignore other global stats
-				}
-			case stat.SourceName == "filter":
-				labels := []*io_prometheus_client.LabelPair{
-					newLabel("id", stat.SourceID),
-					newLabel("result", stat.Type),
-				}
-				if err := pushMetric(mfs, metric_ns+"_filtered_events_total", io_prometheus_client.MetricType_COUNTER, labels, float64(stat.Number)); err != nil {
-					errs = append(errs, err)
-				}
-			case strings.HasPrefix(stat.SourceName, "src.") && stat.SourceID != "" && stat.Type == "processed":
-				labels := []*io_prometheus_client.LabelPair{
-					newLabel("id", stat.SourceID),
-					newLabel("result", stat.Type),
-				}
-				if stat.SourceInstance != "" {
-					labels = append(labels, newLabel("driver_instance", stat.SourceInstance))
-				}
-				if err := pushMetric(mfs, metric_ns+"_input_events_total", io_prometheus_client.MetricType_COUNTER, labels, float64(stat.Number)); err != nil {
-					errs = append(errs, err)
-				}
-			case strings.HasPrefix(stat.SourceName, "dst.") && slices.Contains([]string{"dropped", "queued", "written"}, stat.Type):
-				result := stat.Type
-				if result == "written" {
-					result = "delivered"
-				}
-				labels := []*io_prometheus_client.LabelPair{
-					newLabel("id", stat.SourceID),
-					newLabel("result", result),
-				}
-				if stat.SourceInstance != "" {
-					labels = append(labels, newLabel("driver_instance", stat.SourceInstance))
-				}
-				if err := pushMetric(mfs, metric_ns+"_output_events_total", io_prometheus_client.MetricType_COUNTER, labels, float64(stat.Number)); err != nil {
-					errs = append(errs, err)
-				}
-			case stat.SourceName == "parser":
-				labels := []*io_prometheus_client.LabelPair{
-					newLabel("id", stat.SourceID),
-					newLabel("result", stat.Type),
-				}
-				if err := pushMetric(mfs, metric_ns+"_parsed_events_total", io_prometheus_client.MetricType_COUNTER, labels, float64(stat.Number)); err != nil {
-					errs = append(errs, err)
-				}
-			case stat.SourceName == "tag":
-				labels := []*io_prometheus_client.LabelPair{
-					newLabel("id", stat.SourceID),
-					newLabel("result", stat.Type),
-				}
-				if err := pushMetric(mfs, metric_ns+"_tagged_events_total", io_prometheus_client.MetricType_COUNTER, labels, float64(stat.Number)); err != nil {
-					errs = append(errs, err)
-				}
-			}
-		}
-		err = errors.Join(errs...)
+		mfs, err = createMetricsFromLegacyStats(rsp)
 	} else {
 		mfs, err = new(expfmt.TextParser).TextToMetricFamilies(strings.NewReader(rsp))
 		for _, mf := range mfs {
