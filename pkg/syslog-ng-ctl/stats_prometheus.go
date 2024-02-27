@@ -19,9 +19,11 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
+	"github.com/prometheus/prometheus/model/timestamp"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -110,19 +112,68 @@ func createMetricsFromLegacyStats(legacyStats string) (map[string]*io_prometheus
 	return mfs, err
 }
 
-func StatsPrometheus(ctx context.Context, cc ControlChannel) ([]*io_prometheus_client.MetricFamily, error) {
+func transformEventDelayMetric(delayMetric *io_prometheus_client.MetricFamily, delayMetricAge *io_prometheus_client.MetricFamily, now time.Time, lastMetricQueryTime time.Time, mfs map[string]*io_prometheus_client.MetricFamily) {
+
+	if delayMetricAge == nil {
+		delete(mfs, "syslogng_output_event_delay_sample_seconds")
+		return
+	}
+
+	delayMetricAgeByLabel := make(map[string]*io_prometheus_client.Metric)
+	for _, a := range delayMetricAge.Metric {
+		delayMetricAgeByLabel[fmt.Sprint(a.Label)] = a
+	}
+
+	transformedMetric := []*io_prometheus_client.Metric{}
+	for _, m := range delayMetric.Metric {
+		delayMetric := m
+
+		if d, ok := delayMetricAgeByLabel[fmt.Sprint(m.Label)]; ok {
+			delayMetricAge := d.GetGauge().GetValue()
+
+			lastDelaySampleTS := now.Add(time.Duration(-delayMetricAge * float64(time.Second)))
+			if lastDelaySampleTS.After(lastMetricQueryTime) {
+				timestampMs := timestamp.FromTime(lastDelaySampleTS)
+				transformedMetric = append(transformedMetric,
+					&io_prometheus_client.Metric{
+						Label:       delayMetric.GetLabel(),
+						Gauge:       &io_prometheus_client.Gauge{Value: delayMetric.GetUntyped().Value},
+						TimestampMs: &timestampMs,
+					},
+				)
+			}
+		}
+	}
+
+	if len(transformedMetric) == 0 {
+		delete(mfs, "syslogng_output_event_delay_sample_seconds")
+		return
+	}
+
+	delayMetric.Metric = transformedMetric
+	delayMetric.Type = io_prometheus_client.MetricType_GAUGE.Enum()
+}
+
+func StatsPrometheus(ctx context.Context, cc ControlChannel, lastMetricQueryTime *time.Time) ([]*io_prometheus_client.MetricFamily, error) {
 	rsp, err := cc.SendCommand(ctx, "STATS PROMETHEUS")
 	if err != nil {
 		return nil, err
 	}
 
+	now := time.Now()
+
 	var mfs map[string]*io_prometheus_client.MetricFamily
 	if strings.HasPrefix(rsp, StatsHeader) {
 		mfs, err = createMetricsFromLegacyStats(rsp)
+		*lastMetricQueryTime = now
 		return maps.Values(mfs), err
 	}
 
 	mfs, err = new(expfmt.TextParser).TextToMetricFamilies(strings.NewReader(rsp))
+
+	var delayMetric *io_prometheus_client.MetricFamily
+	var delayMetricAge *io_prometheus_client.MetricFamily
+
 	for _, mf := range mfs {
 		if mf.Type == nil {
 			continue
@@ -143,6 +194,11 @@ func StatsPrometheus(ctx context.Context, cc ControlChannel) ([]*io_prometheus_c
 				m.Untyped = nil
 			}
 			mf.Type = io_prometheus_client.MetricType_COUNTER.Enum()
+		case mf.GetName() == "syslogng_output_event_delay_sample_seconds":
+			delayMetric = mf
+		case mf.GetName() == "syslogng_output_event_delay_sample_age_seconds":
+			delayMetricAge = mf
+			fallthrough
 		default:
 			for _, m := range mf.Metric {
 				m.Gauge = &io_prometheus_client.Gauge{
@@ -154,6 +210,11 @@ func StatsPrometheus(ctx context.Context, cc ControlChannel) ([]*io_prometheus_c
 		}
 	}
 
+	if delayMetric != nil {
+		transformEventDelayMetric(delayMetric, delayMetricAge, now, *lastMetricQueryTime, mfs)
+	}
+
+	*lastMetricQueryTime = now
 	return maps.Values(mfs), err
 }
 

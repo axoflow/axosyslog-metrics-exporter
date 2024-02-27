@@ -18,6 +18,7 @@ import (
 	"context"
 	"strings"
 	"testing"
+	"time"
 
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
@@ -245,6 +246,55 @@ func TestStatsPrometheus(t *testing.T) {
 	}
 	sortMetricFamilies(expected)
 
+	expectedDelayMetrics := []*io_prometheus_client.MetricFamily{
+		{
+			Name: amp("syslogng_output_event_delay_sample_seconds"),
+			Type: io_prometheus_client.MetricType_GAUGE.Enum(),
+			Metric: []*io_prometheus_client.Metric{
+				{
+					Label: []*io_prometheus_client.LabelPair{
+						newLabel("driver", "http"),
+						newLabel("url", "http://localhost/asd"),
+						newLabel("id", "#anon-destination0#1"),
+						newLabel("worker", "0"),
+					},
+					Gauge: &io_prometheus_client.Gauge{
+						Value: amp(2.0),
+					},
+				},
+			},
+		},
+		{
+			Name: amp("syslogng_output_event_delay_sample_age_seconds"),
+			Type: io_prometheus_client.MetricType_GAUGE.Enum(),
+			Metric: []*io_prometheus_client.Metric{
+				{
+					Label: []*io_prometheus_client.LabelPair{
+						newLabel("driver", "http"),
+						newLabel("url", "http://localhost/asd"),
+						newLabel("id", "#anon-destination0#1"),
+						newLabel("worker", "0"),
+					},
+					Gauge: &io_prometheus_client.Gauge{
+						Value: amp(1.0),
+					},
+				},
+				{
+					Label: []*io_prometheus_client.LabelPair{
+						newLabel("transport", "tcp"),
+						newLabel("address", "localhost:5555"),
+						newLabel("driver", "afsocket"),
+						newLabel("id", "#anon-destination0#0"),
+					},
+					Gauge: &io_prometheus_client.Gauge{
+						Value: amp(31.0),
+					},
+				},
+			},
+		},
+	}
+	sortMetricFamilies(expectedDelayMetrics)
+
 	testCases := map[string]struct {
 		cc       ControlChannel
 		expected []*io_prometheus_client.MetricFamily
@@ -263,13 +313,23 @@ func TestStatsPrometheus(t *testing.T) {
 			}),
 			expected: expected,
 		},
+		"syslog-ng stats prometheus delay metrics": {
+			cc: ControlChannelFunc(func(_ context.Context, cmd string) (rsp string, err error) {
+				require.Equal(t, "STATS PROMETHEUS", cmd)
+				return PROMETHEUS_DELAY_METRICS_OUTPUT, nil
+			}),
+			expected: expectedDelayMetrics,
+		},
 	}
+
 	for name, testCase := range testCases {
 		testCase := testCase
 		t.Run(name, func(t *testing.T) {
-			res, err := StatsPrometheus(context.Background(), testCase.cc)
+			lastMetricQueryTime := time.Now().Add(-time.Second * 30)
+			res, err := StatsPrometheus(context.Background(), testCase.cc, &lastMetricQueryTime)
 			require.NoError(t, err)
 			sortMetricFamilies(res)
+			removeTimestamps(res)
 			if !assert.ElementsMatch(t, testCase.expected, res) {
 				assert.Equal(t, metricFamiliesToText(testCase.expected), metricFamiliesToText(res))
 			}
@@ -392,6 +452,12 @@ syslogng_tagged_events_total{id=".source.#anon-source0",result="processed"} 0
 syslogng_tagged_events_total{id=".source.s_network",result="processed"} 0
 `
 
+const PROMETHEUS_DELAY_METRICS_OUTPUT = `syslogng_output_event_delay_sample_seconds{transport="tcp",address="localhost:5555",driver="afsocket",id="#anon-destination0#0"} 5
+syslogng_output_event_delay_sample_seconds{driver="http",url="http://localhost/asd",id="#anon-destination0#1",worker="0"} 2
+syslogng_output_event_delay_sample_age_seconds{driver="http",url="http://localhost/asd",id="#anon-destination0#1",worker="0"} 1
+syslogng_output_event_delay_sample_age_seconds{transport="tcp",address="localhost:5555",driver="afsocket",id="#anon-destination0#0"} 31
+`
+
 func metricFamiliesToText(mfs []*io_prometheus_client.MetricFamily) string {
 	var buf strings.Builder
 	for _, mf := range mfs {
@@ -418,6 +484,14 @@ func sortMetricFamilies(mfs []*io_prometheus_client.MetricFamily) {
 				return strings.Compare(*a.Value, *b.Value)
 			})
 		})
+	}
+}
+
+func removeTimestamps(mfs []*io_prometheus_client.MetricFamily) {
+	for _, mf := range mfs {
+		for _, m := range mf.Metric {
+			m.TimestampMs = nil
+		}
 	}
 }
 
