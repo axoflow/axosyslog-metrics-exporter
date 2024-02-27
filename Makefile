@@ -91,8 +91,8 @@ define on_all_modules
 	( \
 		set -x; \
 		cd $$dir; \
-		$(1); \
-	) \
+		$(1) \
+	) || exit $?; \
 	done
 endef
 
