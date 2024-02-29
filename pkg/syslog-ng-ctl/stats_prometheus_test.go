@@ -20,6 +20,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/stretchr/testify/assert"
@@ -330,7 +332,7 @@ func TestStatsPrometheus(t *testing.T) {
 			require.NoError(t, err)
 			sortMetricFamilies(res)
 			removeTimestamps(res)
-			if !assert.ElementsMatch(t, testCase.expected, res) {
+			if !cmp.Equal(t, testCase.expected, cmpopts.IgnoreUnexported()) {
 				assert.Equal(t, metricFamiliesToText(testCase.expected), metricFamiliesToText(res))
 			}
 		})
