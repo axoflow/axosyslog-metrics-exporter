@@ -16,6 +16,7 @@ package syslogngctl
 
 import (
 	"context"
+	"time"
 
 	io_prometheus_client "github.com/prometheus/client_model/go"
 )
@@ -24,7 +25,8 @@ import (
 //
 // Reference for available commands in syslog-ng-ctl's source code: https://github.com/syslog-ng/syslog-ng/blob/0e7c762c704efbda0ae10b61c35700ef0bdbb9c1/syslog-ng-ctl/syslog-ng-ctl.c#L111
 type Controller struct {
-	ControlChannel ControlChannel
+	ControlChannel      ControlChannel
+	lastMetricQueryTime time.Time
 }
 
 func (c Controller) GetLicenseInfo(ctx context.Context) (string, error) {
@@ -52,5 +54,5 @@ func (c Controller) PreprocessedConfig(ctx context.Context) (string, error) {
 }
 
 func (c Controller) StatsPrometheus(ctx context.Context) ([]*io_prometheus_client.MetricFamily, error) {
-	return StatsPrometheus(ctx, c.ControlChannel)
+	return StatsPrometheus(ctx, c.ControlChannel, &c.lastMetricQueryTime)
 }
