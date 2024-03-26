@@ -156,6 +156,7 @@ func transformEventDelayMetric(delayMetric *io_prometheus_client.MetricFamily, d
 }
 
 func StatsPrometheus(ctx context.Context, cc ControlChannel, lastMetricQueryTime *time.Time) ([]*io_prometheus_client.MetricFamily, error) {
+	fmt.Print("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb")
 	rsp, err := cc.SendCommand(ctx, "STATS PROMETHEUS")
 	if err != nil {
 		return nil, err
