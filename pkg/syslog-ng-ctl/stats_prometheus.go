@@ -119,6 +119,7 @@ func transformEventDelayMetric(delayMetric *io_prometheus_client.MetricFamily, d
 		return
 	}
 
+	fmt.Print("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
 	delayMetricAgeByLabel := make(map[string]*io_prometheus_client.Metric)
 	for _, a := range delayMetricAge.Metric {
 		delayMetricAgeByLabel[fmt.Sprint(a.Label)] = a
