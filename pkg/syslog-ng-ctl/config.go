@@ -25,3 +25,8 @@ func OriginalConfig(ctx context.Context, cc ControlChannel) (string, error) {
 func PreprocessedConfig(ctx context.Context, cc ControlChannel) (string, error) {
 	return cc.SendCommand(ctx, "CONFIG GET PREPROCESSED")
 }
+
+// PreprocessedConfig sends the CONFIG ID command to syslog-ng
+func ConfigID(ctx context.Context, cc ControlChannel) (string, error) {
+	return cc.SendCommand(ctx, "CONFIG ID")
+}
