@@ -29,6 +29,13 @@ type Controller struct {
 	lastMetricQueryTime time.Time
 }
 
+func NewController(controlChannel ControlChannel) Controller {
+	return Controller{
+		ControlChannel:      controlChannel,
+		lastMetricQueryTime: time.Now(),
+	}
+}
+
 func (c Controller) GetLicenseInfo(ctx context.Context) (string, error) {
 	return GetLicenseInfo(ctx, c.ControlChannel)
 }
