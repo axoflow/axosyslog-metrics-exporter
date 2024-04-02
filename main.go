@@ -81,9 +81,7 @@ func main() {
 		requestTimeout = DEFAULT_TIMEOUT_SYSLOG
 	}
 
-	ctl := syslogngctl.Controller{
-		ControlChannel: syslogngctl.NewUnixDomainSocketControlChannel(runArgs.SocketAddr),
-	}
+	ctl := syslogngctl.NewController(syslogngctl.NewUnixDomainSocketControlChannel(runArgs.SocketAddr))
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/metrics", func(w http.ResponseWriter, r *http.Request) {

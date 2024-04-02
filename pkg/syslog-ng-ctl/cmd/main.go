@@ -32,9 +32,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	ctl := syslogngctl.Controller{
-		ControlChannel: syslogngctl.NewUnixDomainSocketControlChannel(socketAddr),
-	}
+	ctl := syslogngctl.NewController(syslogngctl.NewUnixDomainSocketControlChannel(socketAddr))
 
 	cmds := []struct {
 		Args []string
