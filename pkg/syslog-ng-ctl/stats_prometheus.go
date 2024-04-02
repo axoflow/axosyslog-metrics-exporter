@@ -161,11 +161,11 @@ func StatsPrometheus(ctx context.Context, cc ControlChannel, lastMetricQueryTime
 	}
 
 	now := time.Now()
+	defer func() { *lastMetricQueryTime = now }()
 
 	var mfs map[string]*io_prometheus_client.MetricFamily
 	if strings.HasPrefix(rsp, StatsHeader) {
 		mfs, err = createMetricsFromLegacyStats(rsp)
-		*lastMetricQueryTime = now
 		return maps.Values(mfs), err
 	}
 
@@ -214,7 +214,6 @@ func StatsPrometheus(ctx context.Context, cc ControlChannel, lastMetricQueryTime
 		transformEventDelayMetric(delayMetric, delayMetricAge, now, *lastMetricQueryTime, mfs)
 	}
 
-	*lastMetricQueryTime = now
 	return maps.Values(mfs), err
 }
 
