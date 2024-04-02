@@ -29,37 +29,37 @@ type Controller struct {
 	lastMetricQueryTime time.Time
 }
 
-func NewController(controlChannel ControlChannel) Controller {
-	return Controller{
+func NewController(controlChannel ControlChannel) *Controller {
+	return &Controller{
 		ControlChannel:      controlChannel,
 		lastMetricQueryTime: time.Now(),
 	}
 }
 
-func (c Controller) GetLicenseInfo(ctx context.Context) (string, error) {
+func (c *Controller) GetLicenseInfo(ctx context.Context) (string, error) {
 	return GetLicenseInfo(ctx, c.ControlChannel)
 }
 
-func (c Controller) Ping(ctx context.Context) error {
+func (c *Controller) Ping(ctx context.Context) error {
 	return Ping(ctx, c.ControlChannel)
 }
 
-func (c Controller) Reload(ctx context.Context) error {
+func (c *Controller) Reload(ctx context.Context) error {
 	return Reload(ctx, c.ControlChannel)
 }
 
-func (c Controller) Stats(ctx context.Context) ([]Stat, error) {
+func (c *Controller) Stats(ctx context.Context) ([]Stat, error) {
 	return Stats(ctx, c.ControlChannel)
 }
 
-func (c Controller) OriginalConfig(ctx context.Context) (string, error) {
+func (c *Controller) OriginalConfig(ctx context.Context) (string, error) {
 	return OriginalConfig(ctx, c.ControlChannel)
 }
 
-func (c Controller) PreprocessedConfig(ctx context.Context) (string, error) {
+func (c *Controller) PreprocessedConfig(ctx context.Context) (string, error) {
 	return PreprocessedConfig(ctx, c.ControlChannel)
 }
 
-func (c Controller) StatsPrometheus(ctx context.Context) ([]*io_prometheus_client.MetricFamily, error) {
+func (c *Controller) StatsPrometheus(ctx context.Context) ([]*io_prometheus_client.MetricFamily, error) {
 	return StatsPrometheus(ctx, c.ControlChannel, &c.lastMetricQueryTime)
 }
