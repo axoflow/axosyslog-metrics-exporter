@@ -129,9 +129,9 @@ func transformEventDelayMetric(delayMetric *io_prometheus_client.MetricFamily, d
 		delayMetric := m
 
 		if d, ok := delayMetricAgeByLabel[fmt.Sprint(m.Label)]; ok {
-			delayMetricAge := d.GetGauge().GetValue()
+			delayMetricAge := int(d.GetGauge().GetValue())
 
-			lastDelaySampleTS := now.Add(time.Duration(-delayMetricAge * float64(time.Second)))
+			lastDelaySampleTS := now.Add(time.Duration(-delayMetricAge) * time.Second)
 			fmt.Printf("---------------------!!delay metric age: %v lastDelay: %v lastQuery: %v\n", delayMetricAge, lastDelaySampleTS, lastMetricQueryTime)
 			if lastDelaySampleTS.After(lastMetricQueryTime) {
 				timestampMs := timestamp.FromTime(lastDelaySampleTS)
