@@ -76,14 +76,17 @@ func parseStats(rsp string) (stats []Stat, errs error) {
 			errs = errors.Join(errs, err)
 			continue
 		}
-		stats = append(stats, Stat{
-			SourceName:     fields[0],
-			SourceID:       fields[1],
-			SourceInstance: fields[2],
-			SourceState:    SourceState(fields[3][0]),
-			Type:           fields[4],
-			Number:         num,
-		})
+
+		if fields[3] != string(SourceStateOrphaned) {
+			stats = append(stats, Stat{
+				SourceName:     fields[0],
+				SourceID:       fields[1],
+				SourceInstance: fields[2],
+				SourceState:    SourceState(fields[3][0]),
+				Type:           fields[4],
+				Number:         num,
+			})
+		}
 	}
 	return
 }
