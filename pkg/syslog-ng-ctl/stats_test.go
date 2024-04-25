@@ -56,6 +56,18 @@ src.internal;s_src#1;;a;processed;59
 src.internal;s_src#1;;a;stamp;1673105444
 destination;d_newserr;;a;processed;0
 global;scratch_buffers_bytes;;a;queued;0
+dst.network;#anon-destination0#0;tcp,localhost:1234;o;eps_last_1h;0
+dst.network;#anon-destination0#0;tcp,localhost:1234;o;eps_last_24h;0
+dst.network;#anon-destination0#0;tcp,localhost:1234;o;dropped;0
+dst.network;#anon-destination0#0;tcp,localhost:1234;o;processed;0
+dst.network;#anon-destination0#0;tcp,localhost:1234;o;queued;0
+dst.network;#anon-destination0#0;tcp,localhost:1234;o;memory_usage;0
+dst.network;#anon-destination0#0;tcp,localhost:1234;o;written;0
+dst.network;#anon-destination0#0;tcp,localhost:1234;o;truncated_bytes;0
+dst.network;#anon-destination0#0;tcp,localhost:1234;o;eps_since_start;0
+dst.network;#anon-destination0#0;tcp,localhost:1234;o;msg_size_max;0
+dst.network;#anon-destination0#0;tcp,localhost:1234;o;truncated_count;0
+dst.network;#anon-destination0#0;tcp,localhost:1234;o;msg_size_avg;0
 .
 `
 	expected := []Stat{
