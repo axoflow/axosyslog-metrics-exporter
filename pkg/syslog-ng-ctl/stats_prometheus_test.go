@@ -297,6 +297,34 @@ func TestStatsPrometheus(t *testing.T) {
 	}
 	sortMetricFamilies(expectedDelayMetrics)
 
+	expectedEscapeMetrics := []*io_prometheus_client.MetricFamily{
+		{
+			Name: amp("syslogng_classified_output_events_total"),
+			Type: io_prometheus_client.MetricType_COUNTER.Enum(),
+			Metric: []*io_prometheus_client.Metric{
+				{
+					Label: []*io_prometheus_client.LabelPair{
+						newLabel("app", "MSWinEventLog\\t1\\tSecurity\\t921448325\\tFri"),
+						newLabel("source", "s_critical_hosts_515"),
+					},
+					Counter: &io_prometheus_client.Counter{
+						Value: amp(1.0),
+					},
+				},
+				{
+					Label: []*io_prometheus_client.LabelPair{
+						newLabel("app", "\\a\\t\n\"\\xfa\\"),
+						newLabel("source", "s_unescaped_bug"),
+					},
+					Counter: &io_prometheus_client.Counter{
+						Value: amp(1.0),
+					},
+				},
+			},
+		},
+	}
+	sortMetricFamilies(expectedEscapeMetrics)
+
 	testCases := map[string]struct {
 		cc       ControlChannel
 		expected []*io_prometheus_client.MetricFamily
@@ -321,6 +349,13 @@ func TestStatsPrometheus(t *testing.T) {
 				return PROMETHEUS_DELAY_METRICS_OUTPUT, nil
 			}),
 			expected: expectedDelayMetrics,
+		},
+		"syslog-ng stats prometheus label escaping": {
+			cc: ControlChannelFunc(func(_ context.Context, cmd string) (rsp string, err error) {
+				require.Equal(t, "STATS PROMETHEUS", cmd)
+				return PROMETHEUS_ESCAPE_METRICS_OUTPUT, nil
+			}),
+			expected: expectedEscapeMetrics,
 		},
 	}
 
@@ -458,6 +493,10 @@ const PROMETHEUS_DELAY_METRICS_OUTPUT = `syslogng_output_event_delay_sample_seco
 syslogng_output_event_delay_sample_seconds{driver="http",url="http://localhost/asd",id="#anon-destination0#1",worker="0"} 2
 syslogng_output_event_delay_sample_age_seconds{driver="http",url="http://localhost/asd",id="#anon-destination0#1",worker="0"} 1
 syslogng_output_event_delay_sample_age_seconds{transport="tcp",address="localhost:5555",driver="afsocket",id="#anon-destination0#0"} 31
+`
+
+const PROMETHEUS_ESCAPE_METRICS_OUTPUT = `syslogng_classified_output_events_total{app="MSWinEventLog\\t1\\tSecurity\\t921448325\\tFri",source="s_critical_hosts_515"} 1
+syslogng_classified_output_events_total{app="\a\t\n\"\xfa\\",source="s_unescaped_bug"} 1
 `
 
 func metricFamiliesToText(mfs []*io_prometheus_client.MetricFamily) string {
