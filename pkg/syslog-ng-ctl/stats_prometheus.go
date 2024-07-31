@@ -154,6 +154,38 @@ func transformEventDelayMetric(delayMetric *io_prometheus_client.MetricFamily, d
 	delayMetric.Type = io_prometheus_client.MetricType_GAUGE.Enum()
 }
 
+// Workaround for a bug in older syslog-ng/AxoSyslog versions where the output of STATS PROMETHEUS was overescaped.
+// Escapes \ as \\ everywhere except for the allowed sequences: \\, \n, \"
+func sanitizeBuggyFormat(output string) string {
+	var fixedOutput strings.Builder
+
+	length := len(output)
+	for i := 0; i < length; i++ {
+		c := output[i]
+
+		if c != '\\' {
+			fixedOutput.WriteByte(c)
+			continue
+		}
+
+		if i+1 >= length {
+			fixedOutput.WriteString(`\\`)
+			break
+		}
+
+		if next := output[i+1]; next == '\\' || next == 'n' || next == '"' {
+			fixedOutput.WriteByte(c)
+			fixedOutput.WriteByte(next)
+			i++
+			continue
+		}
+
+		fixedOutput.WriteString(`\\`)
+	}
+
+	return fixedOutput.String()
+}
+
 func StatsPrometheus(ctx context.Context, cc ControlChannel, lastMetricQueryTime *time.Time) ([]*io_prometheus_client.MetricFamily, error) {
 	rsp, err := cc.SendCommand(ctx, "STATS PROMETHEUS")
 	if err != nil {
@@ -169,6 +201,7 @@ func StatsPrometheus(ctx context.Context, cc ControlChannel, lastMetricQueryTime
 		return maps.Values(mfs), err
 	}
 
+	rsp = sanitizeBuggyFormat(rsp)
 	mfs, err = new(expfmt.TextParser).TextToMetricFamilies(strings.NewReader(rsp))
 
 	var delayMetric *io_prometheus_client.MetricFamily
