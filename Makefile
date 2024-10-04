@@ -13,7 +13,7 @@ BIN ?= ${PWD}/bin/${GOOS}/${GOARCH}
 LICENSEI := ${BIN}/licensei
 LICENSEI_VERSION = v0.8.0
 GOLANGCI_LINT := ${BIN}/golangci-lint
-GOLANGCI_LINT_VERSION := v1.51.2
+GOLANGCI_LINT_VERSION := v1.61.0
 
 .PHONY: fmt
 fmt: ## format Go sources
