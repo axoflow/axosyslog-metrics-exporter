@@ -1,4 +1,4 @@
-FROM golang:1.23-bullseye as builder
+FROM golang:1.23-bullseye@sha256:462521f1b7cbf410002a8cc4d91bc897f35cd430854d7240596282f9441fe4a7 as builder
 
 RUN apt-get update \
   && apt-get install --yes entr \
