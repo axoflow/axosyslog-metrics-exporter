@@ -11,9 +11,9 @@ GO_LDFLAGS := -X 'main.Version=${GIT_TAG}'
 BIN ?= ${PWD}/bin/${GOOS}/${GOARCH}
 
 LICENSEI := ${BIN}/licensei
-LICENSEI_VERSION = v0.8.0
+LICENSEI_VERSION = v0.9.0
 GOLANGCI_LINT := ${BIN}/golangci-lint
-GOLANGCI_LINT_VERSION := v1.61.0
+GOLANGCI_LINT_VERSION := v1.63.4
 
 .PHONY: fmt
 fmt: ## format Go sources

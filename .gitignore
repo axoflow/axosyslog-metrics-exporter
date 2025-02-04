@@ -24,3 +24,4 @@ dist/
 .vscode
 .garden
 .licensei.cache
+go.work.sum
