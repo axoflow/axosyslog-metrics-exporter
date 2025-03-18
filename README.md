@@ -86,7 +86,7 @@ spec:
 
 ### Axoflow
 
-AxoSyslog Metrics Exporter is an integral part of the Axoflow Framework, particularly the agent responsible for managing and observing existing AxoSyslog/syslog-ng™ services as well as AxoRouter. [Request a sandbox](https://axoflow.com/request-sandbox/) or [learn more](https://axoflow.com/axoflow-platform/).
+AxoSyslog Metrics Exporter is an integral part of the Axoflow Platform: it's used by the Axolet agent which is responsible for managing and observing existing AxoSyslog/syslog-ng™ services as well as AxoRouter. [Request a sandbox](https://axoflow.com/request-sandbox/) or [learn more](https://axoflow.com/axoflow-platform/).
 
 ## Contact and support
 
