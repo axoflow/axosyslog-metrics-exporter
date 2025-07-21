@@ -1,8 +1,8 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: light)" srcset="https://github.com/axoflow/axosyslog-docker/raw/main/docs/axoflow-logo-color.svg">
-    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/axoflow/axosyslog-docker/raw/main/docs/axoflow-logo-white.svg">
-    <img alt="Axoflow" src="https://github.com/axoflow/axosyslog-docker/raw/main/docs/axoflow-logo-color.svg" width="550">
+    <source media="(prefers-color-scheme: light)" srcset="https://github.com/axoflow/axosyslog/raw/main/doc/axosyslog.svg">
+    <source media="(prefers-color-scheme: dark)" srcset="https://github.com/axoflow/axosyslog/raw/main/doc/axosyslog-white.svg">
+    <img alt="Axoflow" src="https://github.com/axoflow/axosyslog/raw/main/doc/axosyslog.svg" width="550">
   </picture>
 </p>
 
@@ -25,21 +25,21 @@ We keep translating from the legacy `stats` interface in case of older syslog-ng
 
 ### Command line
 
-```
+```sh
 axosyslog-metrics-exporter [options]
 
 Options:
   -service.port string
-    	service bind port (default "9577" or $SERVICE_PORT)
+      service bind port (default "9577" or $SERVICE_PORT)
   -service.timeout string
-    	request timeout (default "5s" or $SERVICE_TIMEOUT)
+      request timeout (default "5s" or $SERVICE_TIMEOUT)
   -socket.path string
-    	syslog-ng control socket path (default "/var/run/syslog-ng/syslog-ng.ctl" or $CONTROL_SOCKET)
+      syslog-ng control socket path (default "/var/run/syslog-ng/syslog-ng.ctl" or $CONTROL_SOCKET)
 ```
 
 ### Docker
 
-```
+```sh
 docker run -d -p 9577:9577 -v $(echo /var/*/syslog-ng/syslog-ng.ctl):/syslog-ng.ctl \
   ghcr.io/axoflow/axosyslog-metrics-exporter:latest --socket.path=/syslog-ng.ctl
 ```
@@ -67,7 +67,7 @@ spec:
 
 You can replace the `exporter` sidecar's image by extending the Logging resource:
 
-```
+```yaml
 apiVersion: logging.banzaicloud.io/v1beta1
 kind: Logging
 metadata:
