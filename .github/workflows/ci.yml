@@ -1,10 +1,9 @@
-name: Go basic checks
+name: CI
 
 on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
   license-check:
@@ -35,7 +34,7 @@ jobs:
       - name: Run license check
         run: make check-license
 
-  run-test:
+  test:
     name: Go tests
     runs-on: ubuntu-latest
 
@@ -51,7 +50,7 @@ jobs:
       - name: Run tests
         run: make test
 
-  run-lint:
+  lint:
     name: Go lint
     runs-on: ubuntu-latest
 
@@ -68,3 +67,14 @@ jobs:
         run: make lint
         env:
           LINTER_FLAGS: '--timeout 5m'
+
+  artifacts:
+    name: Artifacts
+    uses: ./.github/workflows/artifacts.yaml
+    with:
+      publish: ${{ github.event_name == 'push' }}
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      security-events: write
