@@ -82,6 +82,15 @@ func main() {
 			},
 		},
 		{
+			Args: []string{"stats", "--remove-orphans"},
+			Func: func() {
+				if err := ctl.StatsRemoveOrphans(context.Background()); err != nil {
+					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while removing orphaned stats: %s\n", err.Error())
+					os.Exit(2)
+				}
+			},
+		},
+		{
 			Args: []string{"stats"},
 			Func: func() {
 				stats, err := ctl.Stats(context.Background())

@@ -63,3 +63,7 @@ func (c *Controller) PreprocessedConfig(ctx context.Context) (string, error) {
 func (c *Controller) StatsPrometheus(ctx context.Context) ([]*io_prometheus_client.MetricFamily, error) {
 	return StatsPrometheus(ctx, c.ControlChannel, &c.lastMetricQueryTime)
 }
+
+func (c *Controller) StatsRemoveOrphans(ctx context.Context) error {
+	return StatsRemoveOrphans(ctx, c.ControlChannel)
+}
