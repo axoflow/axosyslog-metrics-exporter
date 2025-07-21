@@ -124,13 +124,12 @@ jobs:
           DIGEST: ${{ steps.build.outputs.digest }}
           TAGS: ${{ steps.meta.outputs.tags }}
         run: |
-          if [ "${{ github.repository }}" == "axoflow/axosyslog-metrics-exporter" ]; then
-            for tag in ${TAGS[@]}; do
-              cosign verify "${tag}@${DIGEST}" \
-                --rekor-url "https://rekor.sigstore.dev/" \
-                --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/artifacts.yaml@${{ github.ref }}" \
-                --certificate-oidc-issuer "https://token.actions.githubusercontent.com" | jq
-            done
+          for tag in ${TAGS[@]}; do
+            cosign verify "${tag}@${DIGEST}" \
+              --rekor-url "https://rekor.sigstore.dev/" \
+              --certificate-identity "https://github.com/${{ github.repository }}/.github/workflows/artifacts.yaml@${{ github.ref }}" \
+              --certificate-oidc-issuer "https://token.actions.githubusercontent.com" | jq
+          done
 
       - name: Extract OCI tarball
         run: |
