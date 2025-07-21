@@ -1,5 +1,6 @@
-go 1.23.5
+go 1.24.0
 
-use .
-
-use ./pkg/syslog-ng-ctl
+use (
+	.
+	./pkg/syslog-ng-ctl
+)
