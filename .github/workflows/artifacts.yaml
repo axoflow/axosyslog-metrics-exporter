@@ -73,8 +73,15 @@ jobs:
           flavor: |
             latest = false
           tags: |
+            type=ref,event=branch
+            type=ref,event=pr,prefix=pr-
             type=semver,pattern={{raw}}
-            type=raw,value=latest,enable=${{ inputs.release }}
+            type=raw,value=latest,enable={{is_default_branch}}
+          labels: |
+            org.opencontainers.image.description=Exports Prometheus stats of Axosyslog over HTTP.
+            org.opencontainers.image.title=Axosyslog Metrics Exporter
+            org.opencontainers.image.authors=Axoflow
+            org.opencontainers.image.documentation=https://axoflow.com
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772 # v3.4.0
@@ -95,8 +102,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           outputs: |
-            type=image,push=true
-            type=oci,dest=image.tar
+            type=image,push=${{ inputs.publish }},name=target,annotation-index.org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
+            type=oci,dest=image.tar,name=target,annotation-index.org.opencontainers.image.description=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.description'] }}
 
       - name: Sign image with GitHub OIDC Token
         if: ${{ inputs.publish && github.repository_owner == 'axoflow' }} # Check if the workflow is called by the same GitHub organization
