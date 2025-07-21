@@ -13,7 +13,7 @@ BIN ?= ${PWD}/bin/${GOOS}/${GOARCH}
 LICENSEI := ${BIN}/licensei
 LICENSEI_VERSION = v0.9.0
 GOLANGCI_LINT := ${BIN}/golangci-lint
-GOLANGCI_LINT_VERSION := v1.63.4
+GOLANGCI_LINT_VERSION := v2.2.2
 
 .PHONY: fmt
 fmt: ## format Go sources
@@ -75,7 +75,7 @@ endif
 ${GOLANGCI_LINT}: ${GOLANGCI_LINT}_${GOLANGCI_LINT_VERSION}_${GOVERSION} | ${BIN}
 	ln -sf $(notdir $<) $@
 
-${GOLANGCI_LINT}_${GOLANGCI_LINT_VERSION}_${GOVERSION}: IMPORT_PATH := github.com/golangci/golangci-lint/cmd/golangci-lint
+${GOLANGCI_LINT}_${GOLANGCI_LINT_VERSION}_${GOVERSION}: IMPORT_PATH := github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 ${GOLANGCI_LINT}_${GOLANGCI_LINT_VERSION}_${GOVERSION}: VERSION := ${GOLANGCI_LINT_VERSION}
 ${GOLANGCI_LINT}_${GOLANGCI_LINT_VERSION}_${GOVERSION}: | ${BIN}
 	${go_install_binary}
