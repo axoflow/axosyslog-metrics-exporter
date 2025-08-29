@@ -41,8 +41,7 @@ func main() {
 		{
 			Args: []string{"ping"},
 			Func: func() {
-				err := ctl.Ping(context.Background())
-				if err != nil {
+				if err := ctl.Ping(context.Background()); err != nil {
 					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while pinging syslog-ng: %s\n", err.Error())
 					os.Exit(2)
 				}
@@ -53,6 +52,15 @@ func main() {
 			Func: func() {
 				if err := ctl.Reload(context.Background()); err != nil {
 					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while reloading syslog-ng config: %s\n", err.Error())
+					os.Exit(2)
+				}
+			},
+		},
+		{
+			Args: []string{"stop"},
+			Func: func() {
+				if err := ctl.Stop(context.Background()); err != nil {
+					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while stopping syslog-ng: %s\n", err.Error())
 					os.Exit(2)
 				}
 			},

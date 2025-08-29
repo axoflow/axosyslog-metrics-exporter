@@ -48,6 +48,10 @@ func (c *Controller) Reload(ctx context.Context) error {
 	return Reload(ctx, c.ControlChannel)
 }
 
+func (c *Controller) Stop(ctx context.Context) error {
+	return Stop(ctx, c.ControlChannel)
+}
+
 func (c *Controller) Stats(ctx context.Context) ([]Stat, error) {
 	return Stats(ctx, c.ControlChannel)
 }
