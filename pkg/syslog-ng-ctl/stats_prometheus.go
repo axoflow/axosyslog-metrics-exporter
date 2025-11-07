@@ -23,6 +23,7 @@ import (
 
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
+	"github.com/prometheus/common/model"
 	"github.com/prometheus/prometheus/model/timestamp"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
@@ -202,7 +203,8 @@ func StatsPrometheus(ctx context.Context, cc ControlChannel, lastMetricQueryTime
 	}
 
 	rsp = sanitizeBuggyFormat(rsp)
-	mfs, err = new(expfmt.TextParser).TextToMetricFamilies(strings.NewReader(rsp))
+	parser := expfmt.NewTextParser(model.UTF8Validation)
+	mfs, err = parser.TextToMetricFamilies(strings.NewReader(rsp))
 
 	var delayMetric *io_prometheus_client.MetricFamily
 	var delayMetricAge *io_prometheus_client.MetricFamily
