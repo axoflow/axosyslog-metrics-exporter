@@ -1,4 +1,4 @@
-FROM golang:1.24-bullseye@sha256:254c0d1f13aad57bb210caa9e049deaee17ab7b8a976dba755cba1adf3fbe291 AS builder
+FROM golang:1.24.11-bookworm@sha256:fc58bb98c4b7ebc8211c94df9dee40489e48363c69071bceca91aa59023b0dee AS builder
 
 RUN apt-get update \
   && apt-get install --yes entr \
@@ -26,7 +26,7 @@ RUN make build
 
 # Use distroless as minimal base image to package the axo-controller binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/base-debian11:latest AS prod
+FROM gcr.io/distroless/base-debian12:latest AS prod
 
 WORKDIR /
 COPY --from=builder /LICENSE /
