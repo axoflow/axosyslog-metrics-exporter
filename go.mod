@@ -1,6 +1,6 @@
 module github.com/axoflow/axosyslog-metrics-exporter
 
-go 1.24.0
+go 1.24.11
 
 require (
 	github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl v0.0.0-20250721143838-ee0a5adf916c
