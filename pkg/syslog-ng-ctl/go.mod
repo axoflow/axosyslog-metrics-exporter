@@ -1,6 +1,6 @@
 module github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl
 
-go 1.25.0
+go 1.26.5
 
 require (
 	github.com/google/go-cmp v0.7.0
