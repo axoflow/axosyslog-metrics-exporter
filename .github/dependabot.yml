@@ -6,13 +6,27 @@ updates:
       - /pkg/syslog-ng-ctl
     schedule:
       interval: weekly
+    groups:
+      go-dependencies:
+        patterns:
+          - "*"
 
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: weekly
+    ignore:
+      - dependency-name: sigstore/cosign-installer
+    groups:
+      actions-dependencies:
+        patterns:
+          - "*"
 
   - package-ecosystem: docker
     directory: /
     schedule:
       interval: weekly
+    groups:
+      docker-dependencies:
+        patterns:
+          - "*"
