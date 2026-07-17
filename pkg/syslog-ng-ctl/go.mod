@@ -6,9 +6,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/prometheus/client_model v0.6.2
 	github.com/prometheus/common v0.70.0
-	github.com/prometheus/prometheus v0.313.1
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa
 )
 
 require (

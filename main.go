@@ -20,13 +20,13 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
 
 	syslogngctl "github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl"
 	"github.com/prometheus/common/expfmt"
-	"golang.org/x/exp/slog"
 )
 
 const (

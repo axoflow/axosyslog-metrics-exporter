@@ -18,15 +18,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
+	"slices"
 	"strings"
 	"time"
 
 	io_prometheus_client "github.com/prometheus/client_model/go"
 	"github.com/prometheus/common/expfmt"
 	"github.com/prometheus/common/model"
-	"github.com/prometheus/prometheus/model/timestamp"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 func createMetricsFromLegacyStats(legacyStats string) (map[string]*io_prometheus_client.MetricFamily, error) {
@@ -134,12 +133,11 @@ func transformEventDelayMetric(delayMetric *io_prometheus_client.MetricFamily, d
 
 			lastDelaySampleTS := now.Add(time.Duration(-delayMetricAge) * time.Second)
 			if lastDelaySampleTS.After(lastMetricQueryTime) {
-				timestampMs := timestamp.FromTime(lastDelaySampleTS)
 				transformedMetric = append(transformedMetric,
 					&io_prometheus_client.Metric{
 						Label:       delayMetric.GetLabel(),
 						Gauge:       &io_prometheus_client.Gauge{Value: delayMetric.GetUntyped().Value},
-						TimestampMs: &timestampMs,
+						TimestampMs: new(lastDelaySampleTS.UnixMilli()),
 					},
 				)
 			}
@@ -199,7 +197,7 @@ func StatsPrometheus(ctx context.Context, cc ControlChannel, lastMetricQueryTime
 	var mfs map[string]*io_prometheus_client.MetricFamily
 	if strings.HasPrefix(rsp, StatsHeader) {
 		mfs, err = createMetricsFromLegacyStats(rsp)
-		return maps.Values(mfs), err
+		return slices.Collect(maps.Values(mfs)), err
 	}
 
 	rsp = sanitizeBuggyFormat(rsp)
@@ -249,7 +247,7 @@ func StatsPrometheus(ctx context.Context, cc ControlChannel, lastMetricQueryTime
 		transformEventDelayMetric(delayMetric, delayMetricAge, now, *lastMetricQueryTime, mfs)
 	}
 
-	return maps.Values(mfs), err
+	return slices.Collect(maps.Values(mfs)), err
 }
 
 func pushMetric(mfs map[string]*io_prometheus_client.MetricFamily, name string, typ io_prometheus_client.MetricType, labels []*io_prometheus_client.LabelPair, value float64) error {
