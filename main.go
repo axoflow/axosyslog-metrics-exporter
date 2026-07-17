@@ -78,6 +78,7 @@ func main() {
 	logger.Info("testing syslog-ng control socket path", "socketPath", runArgs.SocketAddr, "found", err == nil, "error", err)
 	requestTimeout, err := time.ParseDuration(runArgs.RequestTimeout)
 	if err != nil {
+		logger.Warn("invalid request timeout, using default", "value", runArgs.RequestTimeout, "default", DEFAULT_TIMEOUT_SYSLOG, "error", err)
 		requestTimeout = DEFAULT_TIMEOUT_SYSLOG
 	}
 
@@ -91,7 +92,7 @@ func main() {
 		defer cancel()
 		mfs, err := ctl.StatsPrometheus(subCtx)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "failed to query syslog-ng stats", http.StatusBadGateway)
 			logger.Error("socket command failed", "error", err)
 			return
 		}
@@ -101,7 +102,7 @@ func main() {
 		for _, mf := range mfs {
 			_, err := expfmt.MetricFamilyToText(&resp, mf)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				http.Error(w, "failed to convert metrics", http.StatusInternalServerError)
 				logger.Error("metrics conversion failed", "error", err)
 				return
 			}
@@ -109,7 +110,6 @@ func main() {
 
 		bodyLen, err := io.Copy(w, &resp)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
 			logger.Error("writing response failed", "error", err)
 			return
 		}
@@ -121,15 +121,12 @@ func main() {
 
 		subCtx, cancel := context.WithTimeout(r.Context(), requestTimeout)
 		defer cancel()
-		err := ctl.Ping(subCtx)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err := ctl.Ping(subCtx); err != nil {
+			http.Error(w, "syslog-ng is unreachable", http.StatusBadGateway)
 			logger.Error("socket command failed", "error", err)
 			return
 		}
-		_, err = w.Write([]byte(`PONG`))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if _, err = w.Write([]byte(`PONG`)); err != nil {
 			logger.Error("writing response failed", "error", err)
 			return
 		}
