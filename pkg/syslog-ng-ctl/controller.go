@@ -39,7 +39,7 @@ func NewController(controlChannel ControlChannel) *Controller {
 }
 
 func (c *Controller) GetLicenseInfo(ctx context.Context) (string, error) {
-	return GetLicenseInfo(ctx, c.ControlChannel)
+	return License(ctx, c.ControlChannel)
 }
 
 func (c *Controller) Ping(ctx context.Context) error {
