@@ -17,28 +17,31 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
-	syslogngctl "github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl"
 	"github.com/prometheus/common/expfmt"
+
+	syslogngctl "github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl"
 )
 
 const (
-	DEFAULT_TIMEOUT_SYSLOG time.Duration = time.Second * 5
-	DEFAULT_SERVICE_PORT                 = "9577"
-	DEFAULT_SOCKET_ADDR                  = "/var/run/syslog-ng/syslog-ng.ctl"
-	license                              = "Apache License, Version 2.0"
+	DEFAULT_TIMEOUT_SYSLOG = time.Second * 5
+	DEFAULT_SERVICE_PORT   = "9577"
+	DEFAULT_SOCKET_ADDR    = "/var/run/syslog-ng/syslog-ng.ctl"
+	license                = "Apache License, Version 2.0"
 )
 
-var (
-	Version = "dev" // should be set build-time, see Makefile
-)
+// Version should be set build-time, see Makefile
+var Version = "dev"
 
 type RunArgs struct {
 	SocketAddr     string
@@ -133,6 +136,34 @@ func main() {
 		logger.Info("pong")
 	})
 
-	err = http.ListenAndServe(runArgs.ServiceAddress, mux)
-	logger.Info("exiting", "error", err)
+	server := &http.Server{
+		Addr:    runArgs.ServiceAddress,
+		Handler: mux,
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	serverErr := make(chan error, 1)
+	go func() {
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErr <- err
+		}
+	}()
+
+	select {
+	case err := <-serverErr:
+		logger.Error("server failed", "error", err)
+		os.Exit(1)
+	case <-ctx.Done():
+		logger.Info("shutdown signal received, stopping server")
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		logger.Error("graceful shutdown failed", "error", err)
+		os.Exit(1)
+	}
+	logger.Info("server stopped")
 }
