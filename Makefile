@@ -92,7 +92,7 @@ define on_all_modules
 		set -x; \
 		cd $$dir; \
 		$(1) \
-	) || exit $?; \
+	) || exit $$?; \
 	done
 endef
 
