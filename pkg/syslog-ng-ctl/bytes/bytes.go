@@ -14,10 +14,6 @@
 
 package bytes
 
-import (
-	"golang.org/x/exp/constraints"
-)
-
 // CommonPrefixLen returns the length of its two parameters' common prefix
 func CommonPrefixLen(a, b []byte) int {
 	l := min(len(a), len(b))
@@ -28,11 +24,4 @@ func CommonPrefixLen(a, b []byte) int {
 		}
 	}
 	return l
-}
-
-func min[T constraints.Ordered](a, b T) T {
-	if a < b {
-		return a
-	}
-	return b
 }

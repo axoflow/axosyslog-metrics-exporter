@@ -17,28 +17,31 @@ package main
 import (
 	"bytes"
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
-	syslogngctl "github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl"
 	"github.com/prometheus/common/expfmt"
-	"golang.org/x/exp/slog"
+
+	syslogngctl "github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl"
 )
 
 const (
-	DEFAULT_TIMEOUT_SYSLOG time.Duration = time.Second * 5
-	DEFAULT_SERVICE_PORT                 = "9577"
-	DEFAULT_SOCKET_ADDR                  = "/var/run/syslog-ng/syslog-ng.ctl"
-	license                              = "Apache License, Version 2.0"
+	DEFAULT_TIMEOUT_SYSLOG = time.Second * 5
+	DEFAULT_SERVICE_PORT   = "9577"
+	DEFAULT_SOCKET_ADDR    = "/var/run/syslog-ng/syslog-ng.ctl"
+	license                = "Apache License, Version 2.0"
 )
 
-var (
-	Version = "dev" // should be set build-time, see Makefile
-)
+// Version should be set build-time, see Makefile
+var Version = "dev"
 
 type RunArgs struct {
 	SocketAddr     string
@@ -78,6 +81,7 @@ func main() {
 	logger.Info("testing syslog-ng control socket path", "socketPath", runArgs.SocketAddr, "found", err == nil, "error", err)
 	requestTimeout, err := time.ParseDuration(runArgs.RequestTimeout)
 	if err != nil {
+		logger.Warn("invalid request timeout, using default", "value", runArgs.RequestTimeout, "default", DEFAULT_TIMEOUT_SYSLOG, "error", err)
 		requestTimeout = DEFAULT_TIMEOUT_SYSLOG
 	}
 
@@ -91,7 +95,7 @@ func main() {
 		defer cancel()
 		mfs, err := ctl.StatsPrometheus(subCtx)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
+			http.Error(w, "failed to query syslog-ng stats", http.StatusBadGateway)
 			logger.Error("socket command failed", "error", err)
 			return
 		}
@@ -101,7 +105,7 @@ func main() {
 		for _, mf := range mfs {
 			_, err := expfmt.MetricFamilyToText(&resp, mf)
 			if err != nil {
-				http.Error(w, err.Error(), http.StatusInternalServerError)
+				http.Error(w, "failed to convert metrics", http.StatusInternalServerError)
 				logger.Error("metrics conversion failed", "error", err)
 				return
 			}
@@ -109,7 +113,6 @@ func main() {
 
 		bodyLen, err := io.Copy(w, &resp)
 		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
 			logger.Error("writing response failed", "error", err)
 			return
 		}
@@ -121,21 +124,46 @@ func main() {
 
 		subCtx, cancel := context.WithTimeout(r.Context(), requestTimeout)
 		defer cancel()
-		err := ctl.Ping(subCtx)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if err := ctl.Ping(subCtx); err != nil {
+			http.Error(w, "syslog-ng is unreachable", http.StatusBadGateway)
 			logger.Error("socket command failed", "error", err)
 			return
 		}
-		_, err = w.Write([]byte(`PONG`))
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+		if _, err = w.Write([]byte(`PONG`)); err != nil {
 			logger.Error("writing response failed", "error", err)
 			return
 		}
 		logger.Info("pong")
 	})
 
-	err = http.ListenAndServe(runArgs.ServiceAddress, mux)
-	logger.Info("exiting", "error", err)
+	server := &http.Server{
+		Addr:    runArgs.ServiceAddress,
+		Handler: mux,
+	}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	serverErr := make(chan error, 1)
+	go func() {
+		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			serverErr <- err
+		}
+	}()
+
+	select {
+	case err := <-serverErr:
+		logger.Error("server failed", "error", err)
+		os.Exit(1)
+	case <-ctx.Done():
+		logger.Info("shutdown signal received, stopping server")
+	}
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), requestTimeout)
+	defer cancel()
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		logger.Error("graceful shutdown failed", "error", err)
+		os.Exit(1)
+	}
+	logger.Info("server stopped")
 }

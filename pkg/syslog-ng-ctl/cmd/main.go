@@ -18,11 +18,12 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
-	syslogngctl "github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl"
 	"github.com/prometheus/common/expfmt"
-	"golang.org/x/exp/slices"
+
+	syslogngctl "github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl"
 )
 
 func main() {

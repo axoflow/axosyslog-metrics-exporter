@@ -25,3 +25,6 @@ dist/
 .garden
 .licensei.cache
 go.work.sum
+
+# Stray root build artifact (use `make build` -> dist/)
+/axosyslog-metrics-exporter

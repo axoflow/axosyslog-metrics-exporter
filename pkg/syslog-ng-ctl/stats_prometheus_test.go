@@ -16,6 +16,7 @@ package syslogngctl
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -26,7 +27,6 @@ import (
 	"github.com/prometheus/common/expfmt"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang.org/x/exp/slices"
 )
 
 func TestStatsPrometheus(t *testing.T) {

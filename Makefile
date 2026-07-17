@@ -13,7 +13,7 @@ BIN ?= ${PWD}/bin/${GOOS}/${GOARCH}
 LICENSEI := ${BIN}/licensei
 LICENSEI_VERSION = v0.9.0
 GOLANGCI_LINT := ${BIN}/golangci-lint
-GOLANGCI_LINT_VERSION := v2.2.2
+GOLANGCI_LINT_VERSION := v2.12.2
 
 .PHONY: fmt
 fmt: ## format Go sources
@@ -92,7 +92,7 @@ define on_all_modules
 		set -x; \
 		cd $$dir; \
 		$(1) \
-	) || exit $?; \
+	) || exit $$?; \
 	done
 endef
 
