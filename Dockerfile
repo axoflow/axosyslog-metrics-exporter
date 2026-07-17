@@ -24,9 +24,9 @@ COPY . .
 # RUN go build ./...
 RUN make build
 
-# Use distroless as minimal base image to package the axo-controller binary
+# Use distroless as minimal base image to package the Go binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
-FROM gcr.io/distroless/base-debian12:latest AS prod
+FROM gcr.io/distroless/base-debian12@sha256:348dac1808083ccc3366399d6db835875b4eaf7c9b694783f5a3f353c4b58a28 AS prod
 
 WORKDIR /
 COPY --from=builder /LICENSE /
