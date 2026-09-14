@@ -60,7 +60,16 @@ func main() {
 		{
 			Args: []string{"stop"},
 			Func: func() {
-				if err := ctl.Stop(context.Background()); err != nil {
+				if err := ctl.Stop(context.Background(), false); err != nil {
+					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while stopping syslog-ng: %s\n", err.Error())
+					os.Exit(2)
+				}
+			},
+		},
+		{
+			Args: []string{"stop", "--force"},
+			Func: func() {
+				if err := ctl.Stop(context.Background(), true); err != nil {
 					_, _ = fmt.Fprintf(os.Stderr, "An error occurred while stopping syslog-ng: %s\n", err.Error())
 					os.Exit(2)
 				}
