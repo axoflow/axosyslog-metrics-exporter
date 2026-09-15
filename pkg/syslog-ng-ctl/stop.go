@@ -16,8 +16,15 @@ package syslogngctl
 
 import "context"
 
-// Stop sends the stop command to the syslog-ng instance behind the control channel
-func Stop(ctx context.Context, cc ControlChannel) error {
-	_, err := cc.SendCommand(ctx, "STOP")
+// Stop sends the stop command to the syslog-ng instance behind the control channel.
+// With force set, axosyslog exits without waiting for its worker threads and loses the
+// contents of its in-memory queues (syslog-ng-ctl stop --force, axoflow/axosyslog#1249).
+// Older versions match control commands by prefix and run a plain STOP.
+func Stop(ctx context.Context, cc ControlChannel, force bool) error {
+	cmd := "STOP"
+	if force {
+		cmd = "STOP FORCE"
+	}
+	_, err := cc.SendCommand(ctx, cmd)
 	return err
 }
