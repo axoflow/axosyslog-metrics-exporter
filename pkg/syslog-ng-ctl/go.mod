@@ -5,7 +5,7 @@ go 1.26.5
 require (
 	github.com/google/go-cmp v0.7.0
 	github.com/prometheus/client_model v0.6.3
-	github.com/prometheus/common v0.71.0
+	github.com/prometheus/common v0.72.0
 	github.com/stretchr/testify v1.12.1
 )
 
