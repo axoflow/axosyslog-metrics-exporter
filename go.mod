@@ -4,7 +4,7 @@ go 1.26.5
 
 require (
 	github.com/axoflow/axosyslog-metrics-exporter/pkg/syslog-ng-ctl v0.0.0-20250721143838-ee0a5adf916c
-	github.com/prometheus/common v0.71.0
+	github.com/prometheus/common v0.72.0
 )
 
 require (
