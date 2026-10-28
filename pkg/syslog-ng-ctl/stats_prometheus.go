@@ -219,7 +219,7 @@ func StatsPrometheus(ctx context.Context, cc ControlChannel, lastMetricQueryTime
 		}
 
 		switch {
-		case strings.HasSuffix(*mf.Name, "_events_total"):
+		case strings.HasSuffix(*mf.Name, "_total"):
 			for _, m := range mf.Metric {
 				m.Counter = &io_prometheus_client.Counter{
 					Value: m.Untyped.Value,
