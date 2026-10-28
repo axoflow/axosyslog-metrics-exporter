@@ -325,6 +325,42 @@ func TestStatsPrometheus(t *testing.T) {
 	}
 	sortMetricFamilies(expectedEscapeMetrics)
 
+	// legacy CSV output does not emit _bytes_total events
+	// (syslog-ng OSE, including 4.x), so only the prometheus
+	// output extends the shared expectation
+	expectedPrometheus := append(slices.Clone(expected),
+		&io_prometheus_client.MetricFamily{
+			Name: amp("syslogng_input_event_bytes_total"),
+			Type: io_prometheus_client.MetricType_COUNTER.Enum(),
+			Metric: []*io_prometheus_client.Metric{
+				{
+					Label: []*io_prometheus_client.LabelPair{
+						newLabel("id", "s_network#1"),
+					},
+					Counter: &io_prometheus_client.Counter{
+						Value: amp(42.0),
+					},
+				},
+			},
+		},
+		&io_prometheus_client.MetricFamily{
+			Name: amp("syslogng_output_http_requests_total"),
+			Type: io_prometheus_client.MetricType_COUNTER.Enum(),
+			Metric: []*io_prometheus_client.Metric{
+				{
+					Label: []*io_prometheus_client.LabelPair{
+						newLabel("id", "d_http#0"),
+						newLabel("response_code", "200"),
+					},
+					Counter: &io_prometheus_client.Counter{
+						Value: amp(3.0),
+					},
+				},
+			},
+		},
+	)
+	sortMetricFamilies(expectedPrometheus)
+
 	testCases := map[string]struct {
 		cc       ControlChannel
 		expected []*io_prometheus_client.MetricFamily
@@ -341,7 +377,7 @@ func TestStatsPrometheus(t *testing.T) {
 				require.Equal(t, "STATS PROMETHEUS", cmd)
 				return PROMETHEUS_METRICS_OUTPUT, nil
 			}),
-			expected: expected,
+			expected: expectedPrometheus,
 		},
 		"syslog-ng stats prometheus delay metrics": {
 			cc: ControlChannelFunc(func(_ context.Context, cmd string) (rsp string, err error) {
@@ -473,6 +509,7 @@ syslogng_filtered_events_total{id="#anon-filter0",result="matched"} 0
 syslogng_filtered_events_total{id="#anon-filter0",result="not_matched"} 0
 syslogng_filtered_events_total{id="ff",result="matched"} 0
 syslogng_filtered_events_total{id="ff",result="not_matched"} 0
+syslogng_input_event_bytes_total{id="s_network#1"} 42
 syslogng_input_events_total{id="#anon-source0#0",driver_instance="-",result="processed"} 0
 syslogng_input_events_total{id="s_network#1",result="processed"} 0
 syslogng_output_events_total{id="d_dest#0",driver_instance="tcp,127.0.0.1:5555",result="delivered"} 0
@@ -481,6 +518,7 @@ syslogng_output_events_total{id="d_dest#0",driver_instance="tcp,127.0.0.1:5555",
 syslogng_output_events_total{id="d_dest#1",driver_instance="http,https://localhost:8080",result="delivered"} 0
 syslogng_output_events_total{id="d_dest#1",driver_instance="http,https://localhost:8080",result="dropped"} 0
 syslogng_output_events_total{id="d_dest#1",driver_instance="http,https://localhost:8080",result="queued"} 0
+syslogng_output_http_requests_total{id="d_http#0",response_code="200"} 3
 syslogng_parsed_events_total{id="#anon-parser0",result="discarded"} 0
 syslogng_parsed_events_total{id="#anon-parser0",result="processed"} 0
 syslogng_scratch_buffers_bytes 0
